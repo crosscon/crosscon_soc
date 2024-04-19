@@ -1,43 +1,50 @@
 # CROSSCON SoC
 
-In this repository you can find the initial version of _CROSSCON SoC_: a SoC developed as part of [CROSSCON project](https://crosscon.eu/), which is part of the deliverable 4.2 (CROSSCON Extension Primitives to Domain Specific Hardware Architectures — Initial Version). It contains on overview of the CROSSCON SoC, its bitstream and instructions on how it can be used with the Arty-A7 100T board. For detailed description of the SoC, please refer to the deliverable 4.1 (ROSSCON Extensions to Domain Specific Hardware Architectures Documentation — Draft) of the CROSSCON project.
+In this repository you can find the initial version of the _CROSSCON SoC_: a system-on-chip (SoC) developed as part of [CROSSCON project](https://crosscon.eu/), which is a part of the deliverable 4.2 (CROSSCON Extension Primitives to Domain Specific Hardware Architectures — Initial Version). The repository contains two versions of the CROSSCON SoC: (1) one demonstrating BA51-H: a small RISC-V core that supports effective virtualisation without MMU and compressed instruction set; and the other (2) the Perimeter guard (PG): a hardware (HW) module that can be used to share HW modules across security domains. Following is an overview of both SoC versions, their bitstreams, and instructions on how they can be used with the Arty-A7 100T board. For detailed description of the CROSSCON SoC, please refer to the deliverable 4.1 (ROSSCON Extensions to Domain Specific Hardware Architectures Documentation — Draft) of the CROSSCON project.
 
 ## Overview
 
-The _CROSSCON SoC_ is a (soft) system on chip (SoC) design, developed as part of the [CROSSCON project](https://crosscon.eu/), that provides secure RISC-V execution environment for mixed criticality IoT devices that require strong security guarantees, flexibility, small code size and low power consumption. The guarantees that the CROSSCON SoC can provide are strong software isolation (hardware-enforced, software-defined virtualization-based TEEs) with the ability to share HW modules connected to SoC interconnect between TEEs without compromising isolation guarantees.
+The CROSSCON SoC is an SoC design, developed as part of the [CROSSCON project](https://crosscon.eu/), that provides a secure RISC-V execution environment for mixed criticality IoT devices that require strong security guarantees, flexibility, small code size and low power consumption. The guarantees that the CROSSCON SoC can provide are strong software isolation (virtualization-based trusted execution environments (TEEs)) with the ability to share HW modules connected to the SoC interconnect between TEEs without compromising isolation guarantees.
+
+We provide two versions of the CROSSCON SoC that will later on be merged into a single SoC. Both version of the SoC are build around the [Beyond Semiconductor's](https://www.beyondsemi.com/) [BA51](https://www.cast-inc.com/processors/risc-v/ba51) RISC-V core and include all the necessary infrastructure that one needs to develop embedded applications on top of a SoC (e.g. JTAG support and UART).
 
 <p align="center">
-    <img src="./imgs/soc_initial_architecture.drawio.png" width=75% height=75%>
+    <img src="./imgs/soc_initial_architecture_with_ba51h.drawio.png" width=70% height=70%>
 </p>
-<p align="center">Figure 1: The initial architecture of the CROSSCON SoC<p align="center">
+<p align="center">Figure 1: The architecture of the CROSSCON SoC version with BA51-H core<p align="center">
 
-Figure 1 shows a high level architecture of the current version of the CROSSCON SoC. The CROSSCON SoC is build around an extended version of [Beyond Semiconductor's](https://www.beyondsemi.com/) [BA51](https://www.cast-inc.com/processors/risc-v/ba51) RISC-V core and includes all the necessary infrastructure that one needs to develop embedded applications on top of a SoC (e.g. JTAG support and UART). The _extended BA51 core_, also called _BA51-H_, is a highly configurable, low-power, deeply embedded 32-bit RISC-V processor IP core extended with unified (2-stage) SPMP, Sstc, and APLIC extensions that allow the CROSSCON hypervisor [?] to establish  hardware-enforced, software-defined virtualization-based trusted execution environments (TEEs), called _Trusted VMs_ in the context of CROSSCON hypervisor; that provide strong hardware-enforced isolation between software running in different VMs.
+**The 1st version of the CROSSCON SoC** (Figure 1) contains an extended version of the [Beyond's BA51 core](https://www.cast-inc.com/processors/risc-v/ba51), called _BA51-H_. BA51-H is a highly configurable, low-power, deeply embedded 32-bit RISC-V process with efficient virtualization support without virtual memory. BA51-H allows the CROSSCON Hypervisor [?] to establish  hardware-enforced, software-defined, virtualization-based TEEs that provide isolated execution environments for the applications / RTOSs running on top the hypervisor.
 
-The BA51-H core supports RISV-V 32-bit ISA with integer instruction set (I), integer multiplication and division (M), atomic instructions (A), single-precision floating-point instructions (F), compressed instructions (C and Zc), hypervisor-extension (H) without virtual memory support, a unified (two stage) memory protection unit (PMP, SPMP and vSPMP), high-precision base counters and timers (Zicntr), S-mod timers (Sstc) and advance platform-level interrupt controller (APLIC). BA51-H supports rv32imafch_spmp_sstc_zc_zicntr ISA. To the best of our knowledge, the extended BA51 is the smallest silicon area RISC-V core with hardware virtualization support featuring unified SPMP, Sstc, and APLIC. 
+The BA51-H core supports RISV-V 32-bit ISA with integer instruction set (I), integer multiplication and division (M), atomic instructions (A), single-precision floating-point instructions (F), compressed instructions (C and Zc), high-precision base counters and timers (Zicntr) extensions and Hypervisor-extension (H) without virtual memory support, a unified (2-stage) S-mode Physical Memory Protection (SPMP), S-mod timers (Sstc), and Advance Platform-Level Interrupt Controller (APLIC) extension for efficient virtualization. To the best of our knowledge, the extended BA51 is the smallest silicon area RISC-V core with hardware virtualization support featuring unified SPMP, Sstc, and APLIC. 
 
 The BA51-H contains the fist implementation of the unified (2-stage) S-mode Physical Memory Protection (SPMP) unit which is one of the possible SPMP candidates for the standardization as part of the [RISC-V SPMP standardization effort](https://github.com/riscv/riscv-spmp?tab=readme-ov-file). We have extended Spike simulator, considered as the golden-model of the RISC-V specification, with the unified (2-stage) SPMP extensions witch servers a reference implementation of the unified SPMP model and allows us to obtain a reference execution environment for the BA51-H core. The extended Spike can be configured to simulate rv32imafch_spmp_sstc_zc_zicntr ISA and is available as a [separate repository](https://github.com/crosscon/riscv-isa-sim).
 
-Furthermore, the CORSSCON SoC also contains the first prototype of _Perimeter guard (PG)_: a mechanism that allows a system to share HW modules across different VMs while preserving the isolation between them. A PG is a HW module that, when placed between the SoC interconnect and the HW module that we want to share (for example, cryptographic accelerator), provides a better control of which VMs and bus masters can use the module and allows the HW module to be "reset" before giving access to the module to a new VM / master. The PG can support several modes of operation, where current prototype only supports time-sharing with reset-mode with lock-release arbitration mode. In the current version of the CROSSCON SoC, as shown by the Figure 1, we use PG to control access to SRAM so that can be shared between different VMs without compromising isolation between them.
+<p align="center">
+    <img src="./imgs/soc_initial_architecture_with_pg.drawio.png" width=70% height=70%>
+</p>
+<p align="center">Figure 2: The architecture of the CROSSCON SoC version with Perimeter guard (PG)<p align="center">
+
+**The 2nd version of the CROSSCON SoC** (Figure 2) contains the [Beyond's BA51](https://www.cast-inc.com/processors/risc-v/ba51) core with prototype implementation of _Perimeter guard (PG)_: a mechanism that allows a system to share HW modules across different VMs while preserving the isolation between them. A PG is a HW module that, when placed between the SoC interconnect and the HW module that we want to share (for example, cryptographic accelerator), provides a better control of which VMs and bus masters can use the module and allows the HW module to be "reset" before giving access to the module to a new VM / master. The PG can support several modes of operation, where current prototype only supports time-sharing with reset-mode with lock-release arbitration mode. In the current version of the CROSSCON SoC, as shown by the Figure 1, we use PG to control access to SRAM so that can be shared between different VMs without compromising isolation between them.
 
 A more detailed description of CROSSCON SoC and Perimeter guard can be found in deliverable 4.1 of the [CROSSCON project](https://crosscon.eu/).
 
 ## How to upload the bitstream
 	                        
-The CROSSCON SoC bitstream can be uploaded to the Arty-A7 100T board aither through Vivado Lab GUI or via terminal using Tool Command Language (TCL). Here we cover the letter option and describe how to program the Arty-A7 over terminal (without the GUI). For how to program Arity-A7 over GUI see [the reference manual](https://digilent.com/reference/programmable-logic/arty-a7/reference-manual).
+The CROSSCON SoC bitstream can be uploaded to the Arty-A7 100T board aither through Vivado Lab GUI or via terminal using Tool Command Language (TCL). Here we cover the letter and describe how to program the Arty-A7 over terminal (without the GUI). For how to program Arity-A7 over GUI see [the reference manual](https://digilent.com/reference/programmable-logic/arty-a7/reference-manual).
 
 ### Prerequisite
         
-We assume that you are following the instructions on an PC with a working setup of Ubuntu or Debian OS.
+We assume that you are following the instructions on a PC with a working setup of Ubuntu or Debian OS.
 
 In order to upload the CROSSCON SoC bitstream to the FPGA, you need to install Vivado Lab that is available [here](https://www.xilinx.com/support/download.html).
 
-After instaslling Vivado Lab, make sure that `vivado_lab` command is available in your terminal.
+After installing Vivado Lab, make sure that `vivado_lab` command is available in your terminal.
 
 ### Uploading the bitstream
 
-Plug in the Arty-A7 board to your PC using an USB-to-micro-USB cable via USB-JTAG port and then execute the following commands. (See [the Arty-A7 reference manual](https://digilent.com/reference/programmable-logic/arty-a7/reference-manual) for the overview of the Arty-A7 board.)
+Plug in the Arty-A7 board to your PC using an USB-to-micro-USB cable via USB-JTAG port and then execute the following commands. See [the Arty-A7 reference manual](https://digilent.com/reference/programmable-logic/arty-a7/reference-manual) for the overview of the Arty-A7 board.
 
-Note, we assume that only one FPGA board is plugged into the PC, otherwise `program_fpga.tcl` might not program the right board.
+Note we assume that only one FPGA board is plugged into the PC, otherwise `bits/program_fpga.tcl` might not program the right board.
 
 ```bash
 # Check out the repostory.
@@ -45,16 +52,21 @@ $git clone https://github.com/crosscon/crosscon_soc.git
 
 $cd crosscon_soc
  
-# Run the program_fpga.ctl script with crosscon_soc_a1_xc_a7.bit bitstream.
-$vivado_lab -mode tcl -source program_fpga.tcl -tclargs crosscon_soc_a1_xc_a7.bit
+# Run the program_fpga.ctl script with one of the <bitstream> bitstream.
+$vivado_lab -mode tcl -source bits/program_fpga.tcl -tclargs bits/<bitstream>.bit
 ```
+
+CROSSCON SoC bistreams are available in `bits` folder.
+
 When Arty-A7 100T was configured successfully:
 - the last line of the previous command should be similar to `INFO: [Labtools 27-3164] End of startup status: HIGH` and
 - the "DONE" LED of the Arty-A7 board should be illuminated green.
 
 Note, if the last line of the previous command is similar to `ERROR: [Labtools 27-3165] End of startup status: LOW`, the board was not programmed correctly.
 
-## How to run a program
+## How to run a Hello Bare Metal project example
+
+Please run this example first just to be sure that everything is working as expected.
 
 A program can be run on the CROSSCON SoC by using:
 - JTAG compatible debug key, as for example Beyond Semuconductor's [Beyond Debug Key](https://www.beyondsemi.com/beyond-debug-key/), and
@@ -62,32 +74,57 @@ A program can be run on the CROSSCON SoC by using:
 
 In order to obtain a copy of BeyondStudio, please create an account on Beyond Semiconductor's [webpage](https://www.beyondsemi.com/bstudio/) and request access to BeyondStudio. Once the access is granted to you, you can download BeyondStudio and BeyondStudio Manual.
 
-### Setting up BeyondStudion and Beyond Debug Key
+We assume that you are following the instructions on a PC with a working setup of Ubuntu or Debian OS.
 
-We assume that you are following the instructions on an PC with a working setup of Ubuntu or Debian OS.
+First, connect Beyond Debug Key with to the Arity-A7's JD port, as shown by the picture below, and connect the Beyond Debug Key to your PC via USB-to-micro-USB cable.
 
-First, connect Beyond Debug Key with to the Arity A7's JD port, as shown by the picture below, and connect the Beyond Debug Key to your PC via macro USB to USB cable.
+<p align="center">
+    <img src="./imgs/arty_a7_debuger_setup.jpeg" width=50% height=50%>
+</p>
 
-TODO: Add picture.
-
-Second, follow the instructions in the BeyondStudio Manual on how to setup BeyondStudion and run your fist program on the BA51 core. Note, you need to use the following information specific to the CROSSCON SoC board when creating a project.
-
-- ...
+Second, follow the instructions in the BeyondStudio Manual on how to setup BeyondStudion and setup your fist Hello Bare Metal project. When you create a new project and you need to select the 'Initial RISC-V (BA5x) target platform configuration', select `CPU: Beyond BA51`, `Endianness : little`, `Base ISA: RV32I (32 bits, 32 registers)`, and the following extensions `Zicsr`, `Zicntr`, `Zifencei`, `M`, `A` and `Zca`. All other configuration options should stay the same as provided by the project creation wizard.
 
 ## Running a Perimeter guard example
 
-You can find an example of how the PG can be used in ? file.
+In this example, we use the 2nd version of the CROSSCON SoC (Figure 2) and demonstrate that we can use the PG in time-sharing with reset and lock-release arbitration mode to protect the SRAM module. You can find the example in `examples/cs_pg_example/src/cs_pg_example.c` file.
 
-In order to run the program, create a basic Hello Bare Metal project for RISC-V (BA5x) in BeyondStudio, copy the code in the main file and run the program.
+As part of the example, the program tries to access the SRAM module with different DIDs and demonstrate that an interrupt is raised if a domain that did not lock the SRAM tries to access it. Furthermore, the program shows that the SRAM is reset after the SRAM is released by the program. This is a basic example where the program is allowed to select its own DID. Later on, we plan to provide an example that demonstrates how PG can be used in the context of CROSSCON Hypervisor, where the CROSSCON Hypervisor provides the DID of the VM that is currently running.
+
+In order to run the program on Arty-A7 board, you need to first connect the Arity-A7 and the Beyond Debug Key, as described in 'How to run a Hello Bare Metal project example' section, and upload the `crosscon_soc_with_pg_a7.bit` bitstream to the Arty-A7 board.
+
+Second, import the `examples/cs_pg_example` repository into BeyondStudio, as described in chapter 8.1. 'Importing existing BeyondStudio projects' in BeyondStudio Manual and run the example.
 
 If program was executed successfully you should see an output similar to the following:
 ```
-Running basic PG test ...
+CROSSCON SoC: Running basic PG test ...
 
-Test successfully completed.
+Trying to read and write to SRAM ...
+
+Trying to access SRAM with the wrong DID ...
+
+Trying to read and write to SRAM with a different HDID ...
+
+Test completed successfully.
+
 ```
+
+## Running a CROSSCON Hypervisor example
+
+...
+
+## Licence
+
+See LICENCE file.
 
 ## Acknowledgments
 
 The work presented in this repository is part of the [CROSSCON project](https://crosscon.eu/) that received funding from the European Union’s Horizon Europe research and innovation programme under grant agreement No 101070537.
+
+<p align="center">
+    <img src="https://crosscon.eu/sites/crosscon/themes/crosscon/images/eu.svg" width=10% height=10%>
+</p>
+
+<p align="center">
+    <img src="https://crosscon.eu/sites/crosscon/files/public/styles/large_1080_/public/content-images/media/2023/crosscon_logo.png?itok=LUH3ejzO" width=25% height=25%>
+</p>
 
