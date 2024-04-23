@@ -1,32 +1,25 @@
 # CROSSCON SoC
 
-In this repository you can find the initial version of the _CROSSCON SoC_: a system-on-chip (SoC) developed as part of [CROSSCON project](https://crosscon.eu/), which is a part of the deliverable 4.2 (CROSSCON Extension Primitives to Domain Specific Hardware Architectures — Initial Version). The repository contains two versions of the CROSSCON SoC: (1) one demonstrating BA51-H: a small RISC-V core that supports effective virtualisation without MMU and compressed instruction set; and the other (2) the Perimeter guard (PG): a hardware (HW) module that can be used to share HW modules across security domains. Following is an overview of both SoC versions, their bitstreams, and instructions on how they can be used with the Arty-A7 100T board. For detailed description of the CROSSCON SoC, please refer to the deliverable 4.1 (ROSSCON Extensions to Domain Specific Hardware Architectures Documentation — Draft) of the CROSSCON project.
+Here you can find the initial version of the _CROSSCON SoC_: a costume system-on-chip (SoC) developed as part of the [CROSSCON project](https://crosscon.eu/). The repository contains on overview of the CROSSCON SoC, its bitstream and instructions on how it can be used with the Arty-A7 100T board. For detailed description of the CROSSCON SoC, please refer to the deliverable 4.1: ROSSCON Extensions to Domain Specific Hardware Architectures Documentation — Draft. This repository is part of the deliverable 4.2: CROSSCON Extension Primitives to Domain Specific Hardware Architectures — Initial Version. 
 
 ## Overview
 
-The CROSSCON SoC is an SoC design, developed as part of the [CROSSCON project](https://crosscon.eu/), that provides a secure RISC-V execution environment for mixed criticality IoT devices that require strong security guarantees, flexibility, small code size and low power consumption. The guarantees that the CROSSCON SoC can provide are strong software isolation (virtualization-based trusted execution environments (TEEs)) with the ability to share HW modules connected to the SoC interconnect between TEEs without compromising isolation guarantees.
-
-We provide two versions of the CROSSCON SoC that will later on be merged into a single SoC. Both version of the SoC are build around the [Beyond Semiconductor's](https://www.beyondsemi.com/) [BA51](https://www.cast-inc.com/processors/risc-v/ba51) RISC-V core and include all the necessary infrastructure that one needs to develop embedded applications on top of a SoC (e.g. JTAG support and UART).
+**CROSSCON SoC** is an SoC design, developed as part of the [CROSSCON project](https://crosscon.eu/), that provides a secure RISC-V execution environment for mixed criticality IoT devices that require strong security guarantees, flexibility, small code size and low power consumption. The guarantees that the CROSSCON SoC can provide are strong software isolation (through virtualization-based trusted execution environments (TEEs)) with the ability to share HW modules connected to the SoC interconnect between TEEs without compromising isolation guarantees.
 
 <p align="center">
-    <img src="./imgs/soc_initial_architecture_with_ba51h.drawio.png" width=70% height=70%>
+    <img src="./imgs/soc_initial_architecture.drawio.png" width=70% height=70%>
 </p>
-<p align="center">Figure 1: The architecture of the CROSSCON SoC version with BA51-H core<p align="center">
+<p align="center">Figure 1: The current architecture of the CROSSCON SoC<p align="center">
 
-**The 1st version of the CROSSCON SoC** (Figure 1) contains an extended version of the [Beyond's BA51 core](https://www.cast-inc.com/processors/risc-v/ba51), called _BA51-H_. BA51-H is a highly configurable, low-power, deeply embedded 32-bit RISC-V process with efficient virtualization support without virtual memory. BA51-H allows the CROSSCON Hypervisor [?] to establish  hardware-enforced, software-defined, virtualization-based TEEs that provide isolated execution environments for the applications / RTOSs running on top the hypervisor.
+Figure 1 shows a high level architecture of the current version of the CROSSCON SoC. The CROSSCON SoC is build around the [Beyond Semiconductor's](https://www.beyondsemi.com/) [BA51](https://www.cast-inc.com/processors/risc-v/ba51) RISC-V core and includes all the necessary infrastructure that one needs to develop embedded applications on top of a SoC (e.g. JTAG support and UART).
 
-The BA51-H core supports RISV-V 32-bit ISA with integer instruction set (I), integer multiplication and division (M), atomic instructions (A), single-precision floating-point instructions (F), compressed instructions (C and Zc), high-precision base counters and timers (Zicntr) extensions and Hypervisor-extension (H) without virtual memory support, a unified (2-stage) S-mode Physical Memory Protection (SPMP), S-mod timers (Sstc), and Advance Platform-Level Interrupt Controller (APLIC) extension for efficient virtualization. To the best of our knowledge, the extended BA51 is the smallest silicon area RISC-V core with hardware virtualization support featuring unified SPMP, Sstc, and APLIC. 
+The extended BA51 core, called **BA51-H**, is highly configurable, low-power, deeply embedded 32-bit RISC-V process with efficient virtualization support without virtual memory. BA51-H allows the [CROSSCON Hypervisor](https://github.com/crosscon/CROSSCON-Hypervisor) to establish  hardware-enforced, software-defined, virtualization-based TEEs that provide isolated execution environments for the applications / RTOSs running on top the hypervisor. The BA51-H core supports RISV-V 32-bit ISA with integer instruction set (I), integer multiplication and division (M), atomic instructions (A), single-precision floating-point instructions (F), compressed instructions (C and Zc), high-precision base counters and timers (Zicntr) extensions and Hypervisor-extension (H) without virtual memory support, a unified (2-stage) S-mode Physical Memory Protection (SPMP), S-mod timers (Sstc), and Advance Platform-Level Interrupt Controller (APLIC) extension for efficient virtualization. To the best of our knowledge, the extended BA51 is the smallest silicon area RISC-V core with hardware virtualization support featuring unified SPMP, Sstc, and APLIC. 
 
 The BA51-H contains the fist implementation of the unified (2-stage) S-mode Physical Memory Protection (SPMP) unit which is one of the possible SPMP candidates for the standardization as part of the [RISC-V SPMP standardization effort](https://github.com/riscv/riscv-spmp?tab=readme-ov-file). We have extended Spike simulator, considered as the golden-model of the RISC-V specification, with the unified (2-stage) SPMP extensions witch servers a reference implementation of the unified SPMP model and allows us to obtain a reference execution environment for the BA51-H core. The extended Spike can be configured to simulate rv32imafch_spmp_sstc_zc_zicntr ISA and is available as a [separate repository](https://github.com/crosscon/riscv-isa-sim).
 
-<p align="center">
-    <img src="./imgs/soc_initial_architecture_with_pg.drawio.png" width=70% height=70%>
-</p>
-<p align="center">Figure 2: The architecture of the CROSSCON SoC version with Perimeter guard (PG)<p align="center">
+Furthermore, the CROSSCON SoC contains the first prototype implementation of **Perimeter guard (PG)**: a mechanism that allows a system to share HW modules across different VMs while preserving the isolation between them. A PG is a HW module that, when placed between the SoC interconnect and the HW module that we want to share (for example, cryptographic accelerator), provides a better control of which VMs and bus masters can use the module and allows the HW module to be "reset" before giving access to the module to a new VM / master. The PG can support several modes of operation, where the current prototype only supports time-sharing with reset-mode with lock-release arbitration mode. In the current version of the CROSSCON SoC, as shown by the Figure 1, we use PG to control access to SRAM so that it can be shared between different VMs without compromising isolation between them.
 
-**The 2nd version of the CROSSCON SoC** (Figure 2) contains the [Beyond's BA51](https://www.cast-inc.com/processors/risc-v/ba51) core with prototype implementation of _Perimeter guard (PG)_: a mechanism that allows a system to share HW modules across different VMs while preserving the isolation between them. A PG is a HW module that, when placed between the SoC interconnect and the HW module that we want to share (for example, cryptographic accelerator), provides a better control of which VMs and bus masters can use the module and allows the HW module to be "reset" before giving access to the module to a new VM / master. The PG can support several modes of operation, where current prototype only supports time-sharing with reset-mode with lock-release arbitration mode. In the current version of the CROSSCON SoC, as shown by the Figure 1, we use PG to control access to SRAM so that can be shared between different VMs without compromising isolation between them.
-
-A more detailed description of CROSSCON SoC and Perimeter guard can be found in deliverable 4.1 of the [CROSSCON project](https://crosscon.eu/).
+A more detailed description of CROSSCON SoC, BA51-H and Perimeter guard can be found in deliverable 4.1 of the [CROSSCON project](https://crosscon.eu/).
 
 ## How to upload the bitstream
 	                        
@@ -52,11 +45,11 @@ $git clone https://github.com/crosscon/crosscon_soc.git
 
 $cd crosscon_soc
  
-# Run the program_fpga.ctl script with one of the <bitstream> bitstream.
-$vivado_lab -mode tcl -source bits/program_fpga.tcl -tclargs bits/<bitstream>.bit
+# Run vivado_lab with the program_fpga.ctl script and crosscon_soc_a7 bitstream.
+$vivado_lab -mode tcl -source bits/program_fpga.tcl -tclargs bits/crosscon_soc_a7_v0.1.bit
 ```
 
-CROSSCON SoC bistreams are available in `bits` folder.
+CROSSCON SoC bistream is available in `bits` folder.
 
 When Arty-A7 100T was configured successfully:
 - the last line of the previous command should be similar to `INFO: [Labtools 27-3164] End of startup status: HIGH` and
@@ -86,7 +79,7 @@ Second, follow the instructions in the BeyondStudio Manual on how to setup Beyon
 
 ## Running a Perimeter guard example
 
-In this example, we use the 2nd version of the CROSSCON SoC (Figure 2) and demonstrate that we can use the PG in time-sharing with reset and lock-release arbitration mode to protect the SRAM module. You can find the example in `examples/cs_pg_example/src/cs_pg_example.c` file.
+In this example, we demonstrate how the PG can be used in time-sharing with reset and lock-release arbitration mode to protect the SRAM module. You can find the example in `examples/cs_pg_example/src/cs_pg_example.c` file.
 
 As part of the example, the program tries to access the SRAM module with different DIDs and demonstrate that an interrupt is raised if a domain that did not lock the SRAM tries to access it. Furthermore, the program shows that the SRAM is reset after the SRAM is released by the program. This is a basic example where the program is allowed to select its own DID. Later on, we plan to provide an example that demonstrates how PG can be used in the context of CROSSCON Hypervisor, where the CROSSCON Hypervisor provides the DID of the VM that is currently running.
 
