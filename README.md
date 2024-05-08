@@ -1,6 +1,6 @@
 # CROSSCON SoC
 
-Here you can find the initial version of the _CROSSCON SoC_: a costume system-on-chip (SoC) developed as part of the [CROSSCON project](https://crosscon.eu/). The repository contains an overview of the CROSSCON SoC, its bitstream and instructions on how to use it with the Arty-A7 100T board. For a detailed description of the CROSSCON SoC, please refer to deliverable D4.1 "ROSSCON Extensions to Domain Specific Hardware Architectures Documentation — Draft". This repository is a part of deliverable D4.2 "CROSSCON Extension Primitives to Domain Specific Hardware Architectures — Initial Version". 
+Here you can find the initial version of the _CROSSCON SoC_: a custom system-on-chip (SoC) developed as part of the [CROSSCON project](https://crosscon.eu/). The repository contains an overview of the CROSSCON SoC, its bitstream and instructions on how to use it with the Arty-A7 100T board. For a detailed description of the CROSSCON SoC, please refer to deliverable D4.1 "CROSSCON Extensions to Domain Specific Hardware Architectures Documentation — Draft". This repository is a part of deliverable D4.2 "CROSSCON Extension Primitives to Domain Specific Hardware Architectures — Initial Version". 
 
 ## Overview
 
