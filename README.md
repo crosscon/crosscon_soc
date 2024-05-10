@@ -29,7 +29,7 @@ The CROSSCON SoC's bitstream can be uploaded to the Arty-A7 100T board through V
         
 We assume that you are following the instructions on a PC with a working Ubuntu or Debian OS setup.
 
-In order to upload the CROSSCON SoC's bitstream to the Arty-A7, you need to install Vivado Lab and the Arty-A7's cable driver. Vivado Lab can be downloaded from [Xilinx's download page](https://www.xilinx.com/support/download.html) where the cable driver's installation script `install_drivers` can be found in `data/xicom/cable_drivers/lin64/install_script/install_drivers` directory of the directory where Vivado Lab was installed. The Vivado Lab is usually installed at `/tools/Xilinx/Vivado_Lab/2022.1` where `2022.1` is replaced with the Vivado Lab's version.
+In order to upload the CROSSCON SoC's bitstream to the Arty-A7, you need to install Vivado Lab and the Arty-A7's cable driver. Vivado Lab can be downloaded from [Xilinx's download page](https://www.xilinx.com/support/download.html) where the cable driver's installation script `install_drivers` is available in `data/xicom/cable_drivers/lin64/install_script/install_drivers` directory where the Vivado Lab was installed. The Vivado Lab is usually installed at `/tools/Xilinx/Vivado_Lab/2022.1` where `2022.1` is replaced with the Vivado Lab's version.
 
 After installing Vivado Lab, make sure that `vivado_lab` command is available in your terminal.
 
