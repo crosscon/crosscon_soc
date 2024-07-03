@@ -9,95 +9,237 @@ Here you can find the initial version of the _CROSSCON SoC_: a system-on-chip (S
 <p align="center">
     <img src="./imgs/soc_initial_architecture.drawio.png" width=70% height=70%>
 </p>
-<p align="center">Figure 1: The current architecture of the CROSSCON SoC<p align="center">
+<p align="center">Figure 1: The current architecture of the CROSSCON SoC</p>
 
 Figure 1 shows a high-level architecture of the current version of the CROSSCON SoC. The CROSSCON SoC is built around the [Beyond Semiconductor's BA51](https://www.cast-inc.com/processors/risc-v/ba51) RISC-V core and includes all the necessary infrastructure that one needs to develop embedded applications (e.g. JTAG support and UART).
 
-The extended BA51 core, called **BA51-H**, is a highly configurable, low-power, deeply embedded 32-bit RISC-V processor with efficient virtualization support without virtual memory. BA51-H allows the [CROSSCON Hypervisor](https://github.com/crosscon/CROSSCON-Hypervisor) to establish  hardware-enforced, software-defined, virtualization-based TEEs, also called trusted VMs, that provide isolated execution environments for the applications / RTOSs running on top of the hypervisor. The BA51-H core supports RISC-V 32-bit ISA with integer instruction set (I), integer multiplication and division (M), atomic instructions (A), single-precision floating-point instructions (F), compressed instructions (C and Zc), high-precision base counters and timers (Zicntr), Hypervisor extension (H) without virtual memory support, a unified (2-stage) S-mode Physical Memory Protection (SPMP), S-mod timers (Sstc), and Advance Platform-Level Interrupt Controller (APLIC) extension for efficient virtualization. To the best of our knowledge, BA51-H is the smallest silicon area RISC-V core with hardware virtualization support featuring unified SPMP, Sstc, and APLIC. Note that the current version of the BA51-H core in the CROSSCON SoC uses the VIC interrupt controller instead of APLIC. APLIC will be enabled in a later version of the CROSSCON SoC.
+The extended BA51 core, called
 
-BA51-H contains the fist implementation of the unified (2-stage) SPMP unit, which is one of the possible SPMP candidates for the standardization as part of the [RISC-V SPMP standardization effort](https://github.com/riscv/riscv-spmp?tab=readme-ov-file). We have extended Spike simulator, the golden model of RISC-V specification, with the unified (2-stage) SPMP extension, which servers a reference implementation of the unified SPMP model and allows us to obtain a reference execution environment for the BA51-H core. The extended Spike can be configured to simulate rv32imafch_spmp_sstc_zc_zicntr ISA and is available as a [separate repository](https://github.com/crosscon/riscv-isa-sim).
+BA51-H contains the fist implementation of the unified (2-stage) SPMP unit, which is one of the possible SPMP candidates for the standardization as part of the [RISC-V SPMP standardization effort](https://github.com/riscv/riscv-spmp?tab=readme-ov-file). We have extended Spike simulator, the golden model of RISC-V specification, with the unified (2-stage) SPMP extension, which servers a reference implementation of the unified SPMP model and allows us to obtain a reference execution environment for the BA51-H core. The extended Spike can be configured to simulate `rv32imafch_spmp_sstc_zc_zicntr` ISA and is available as a [separate repository](https://github.com/crosscon/riscv-isa-sim).
 
 Furthermore, the CROSSCON SoC contains the first prototype implementation of **Perimeter guard (PG)**: a mechanism that allows to share HW modules between VMs while preserving their isolation. PG is a HW module placed between the SoC interconnect and a HW module that we want to share, as, for example, cryptographic accelerator. It can be used to control which VMs and bus masters can access the module; and further, allows the HW module to be "reset" before giving access to the module to a different VM / master. Resetting the module's state prevents any state related information flows through the HW module. PG is planned to support several modes of operation, whereas the current prototype only supports time-sharing with reset mode with lock-release arbitration. In the current version of the CROSSCON SoC, as shown in Figure 1, we use PG to control access to SRAM so that it can be shared between different VMs without compromising their isolation.
 
 A more detailed description of the CROSSCON SoC, BA51-H and PG can be found in deliverable D4.1 "ROSSCON Extensions to Domain Specific Hardware Architectures Documentation — Draft" of the [CROSSCON project](https://crosscon.eu/).
 
-## How to upload the bitstream
-	                        
-The CROSSCON SoC's bitstream can be uploaded to the Arty-A7 100T board through Vivado Lab GUI or via terminal using Vivado's Tool Command Language (TCL). Here we cover how to program the Arty-A7 over terminal (without the GUI). For instructions on how to program Arity-A7 over GUI, see [the reference manual](https://digilent.com/reference/programmable-logic/arty-a7/reference-manual).
+## Running the examples
 
-### Prerequisite
-        
+You can try out the CROSSCON SoC by running it on the Arty-A7 100T board with one of the example programs. To run an example you need to:
+1. Upload the CROSSCON SoC's bitstream to the Arty-A7 100T board.
+2. Build the example for the BA51-H core.
+3. Connect a debug key to the BA51-H, upload the binary of the example and run it.
+
+Here we'll cover how to get the basic Perimeter guard example running. Note that some of the examples might have more specific instructions.
+
 We assume that you are following the instructions on a PC with a working Ubuntu or Debian OS setup.
 
-In order to upload the CROSSCON SoC's bitstream to the Arty-A7, you need to install Vivado Lab and the Arty-A7's cable driver. Vivado Lab can be downloaded from [Xilinx's download page](https://www.xilinx.com/support/download.html) where the cable driver's installation script `install_drivers` is available in `data/xicom/cable_drivers/lin64/install_script/install_drivers` directory where the Vivado Lab was installed. The Vivado Lab is usually installed at `/tools/Xilinx/Vivado_Lab/2022.1` where `2022.1` is replaced with the Vivado Lab's version.
-
-After installing Vivado Lab, make sure that `vivado_lab` command is available in your terminal.
-
-### Uploading the bitstream
-
-Connect the Arty-A7 board with your PC using a USB-to-micro-USB cable via the USB-JTAG port and then execute the following commands. See [the Arty-A7 reference manual](https://digilent.com/reference/programmable-logic/arty-a7/reference-manual) for the overview of the Arty-A7 board.
-
-Note we assume that only one FPGA board is connected to the PC; otherwise `bits/program_fpga.tcl` script might not program the right board.
-
+First, download this repository by running:
 ```bash
-# Check out the repostory.
-git clone https://github.com/crosscon/crosscon_soc.git
-
-cd crosscon_soc
- 
-# Run vivado_lab with the program_fpga.ctl script and crosscon_soc_a7 bitstream.
-vivado_lab -mode tcl -source bits/program_fpga.tcl -tclargs bits/crosscon_soc_a7_v0.1.bit
+git clone https://github.com/crosscon/crosscon_soc
 ```
 
-The CROSSCON SoC's bitstream is available in `bits` folder.
+## How to upload the bitstream
 
-When the Arty-A7 100T is configured successfully:
-- the last line of the previous command should be similar to `INFO: [Labtools 27-3164] End of startup status: HIGH` and
-- the "DONE" LED of the Arty-A7 board should be illuminated green.
+The CROSSCON SoC's bitstream can be uploaded to the Arty-A7 100T board using the [OpenOCD](https://openocd.org/). You can install openocd by `sudo apt install openocd`. Note that you need use openocd v0.12 or newer.
 
-If the last line of the previous command is similar to `ERROR: [Labtools 27-3165] End of startup status: LOW`, the board was not programmed correctly.
+Connect the Arty-A7 board with your PC using a USB-to-micro-USB cable via the USB-JTAG port. See [the Arty-A7 reference manual](https://digilent.com/reference/programmable-logic/arty-a7/reference-manual) for the overview of the Arty-A7 board.
 
-## How to run a Hello Bare Metal project example
+Upload the bitstream by going to the `crosscon_soc/scripts/upload_bits` folder and running:
+```bash
+./upload.sh ../../bits/crosscon_soc_a7_v0.1.bit
+```
 
-Please run this example first to ensure that everything is working as expected.
+If the bitstream was uploaded successfully, you should see an output similar to the following:
+```bash
+Open On-Chip Debugger 0.12.0
+Licensed under GNU GPL v2
+For bug reports, read
+	http://openocd.org/doc/doxygen/bugs.html
+Info : auto-selecting first available session transport "jtag". To override use 'transport select <transport>'.
+jtagspi_program
+Info : clock speed 5000 kHz
+Info : JTAG tap: xc7.tap tap/device found: 0x13631093 (mfg: 0x049 (Xilinx), part: 0x3631, ver: 0x1)
+```
+and the "DONE" LED of the Arty-A7 board should be illuminated green. 
 
-A program can be run on the CROSSCON SoC by using:
-- JTAG compatible debug key, as, for example, Beyond Semiconductor's [Beyond Debug Key](https://www.beyondsemi.com/beyond-debug-key/), and
-- [BeyondStudio IDE](https://www.beyondsemi.com/86/beyondstudio-integrated-development-environment/).
+## Setup the RISC-V toolchain
 
-In order to obtain a copy of BeyondStudio, please create an account on Beyond Semiconductor's [webpage](https://www.beyondsemi.com/bstudio/) and request access to BeyondStudio. Once access is granted, you can download BeyondStudio and the BeyondStudio manual.
+Checkout the [RISC-V toolcahin](https://github.com/riscv/riscv-gnu-toolchain) repository and compile it:
+```
+git clone https://github.com/riscv/riscv-gnu-toolchain
+cd riscv-gnu-toolchain
+mkdir install_dir
+./configure --prefix=$(pwd)/install_dir --with-arch=rv32imacf_zca_zcb_zcf --with-abi=ilp32f
+make
+```
 
-First, connect the Beyond Debug Key to the Arity-A7's JD port, as shown by the picture below, and to your PC via a USB-to-micro-USB cable.
+Note that the toolchain will use the `rv32imacf_zca_zcb_zcf` ARCH and the `ilp32f` ABI by default.
+
+When compiled, the toolchain will be available in the `riscv-gnu-toolchain/install_dir` directory. Set the RISCV environment variable to `bin` directory of the compiled toolchain where the `riscv32-unknown-elf-*` commands are available:
+```
+export RISCV=/path/to/riscv-gnu-toolchain/install_dir/bin
+```
+
+## Build the example program
+
+Go to the examples directory `crosscon_soc/examples/cs_pg_example` and run
+```
+./build.sh
+```
+
+If the example was compiled successfully, the last line of the output should be `# Done.`.
+
+## Upload and run the binary
+
+In order to run the example, we need to upload it's binary to the CROSSCON SoC's memory using a JTAG compatible debug key.
+
+First, connect the debug key to the Arity-A7's JD port, as shown by the picture below, and to your PC via a USB-to-micro-USB cable.
 
 <p align="center">
     <img src="./imgs/arty_a7_debuger_setup.jpeg" width=50% height=50%>
 </p>
+<p align="center">Figure 2: Development setup</p>
 
-Second, follow the instructions in the BeyondStudio manual to set up BeyondStudion and run your fist Hello Bare Metal project. When you create a new project and you need to select the 'Initial RISC-V (BA5x) target platform configuration', select `CPU: Beyond BA51`, `Endianness : little`, `Base ISA: RV32I (32 bits, 32 registers)`, and the following extensions `Zicsr`, `Zicntr`, `Zifencei`, `M`, `A` and `Zca`. All other configuration options should stay the same as provided by the project creation wizard.
+For the following instructions, we assume that you are using [Beyond's debug key](https://www.beyondsemi.com/beyond-debug-key/) with the appropriate cable that has the following pinout on the side that connects to the Arty-A7's JD Pmod port:
 
-## Running a Perimeter guard example
+<p align="center">
+    <img src="./imgs/arty_a7_pmod_connector.png" width=35% height=35%>
+</p>
+<p align="center">Figure 3: Arty-A7's Pmod pin layout (looking from outside of PCB edge)</p>
 
-In this example, we demonstrate how PG can be used in time-sharing with reset and lock-release arbitration mode to protect the SRAM module. You can find the example in `examples/cs_pg_example/src/cs_pg_example.c` file.
+<div align="center">
 
-As part of the example, the program tries to access the SRAM module with different DIDs and demonstrate that an interrupt is raised if a domain that did not lock the SRAM tries to access it. Furthermore, the program shows that PG resets the SRAM module when program releases it. This is a basic example where the program is allowed to select its own DID. Later, we plan to provide an example that demonstrates how PG can be used in the context of the CROSSCON Hypervisor, where the CROSSCON Hypervisor provides the DID of the VM that is currently running.
+| Pin | Signal | Type |
+| --- | ------ | ---- | 
+| 1   | TDO    | Output |
+| 2   |	| |
+| 3   | TCK/SWCLK | Input |
+| 4   | TX | Output |
+| 7   | TDI | Input |
+| 8   | TMS/SWDIO | Input |
+| 9   | nTRST | Input |
+| 10  | RX | Input |
 
-In order to run the program on the Arty-A7 board, you need to first connect the Arity-A7 and the Beyond Debug Key, as described in section 'How to run a Hello Bare Metal project example', and upload the `crosscon_soc_with_pg_a7.bit` bitstream to the Arty-A7 board.
+</div>
 
-Second, import the `examples/cs_pg_example` repository into BeyondStudio, as described in chapter 8.1. 'Importing existing BeyondStudio projects' of the BeyondStudio manual and run the example.
+<p align="center">Table 1: Required JTAG pin input for the Arty-A7's JD Pmod port where Input and Output types denote input/output to/from the targeted JTAG port.</p>
 
-If the program was executed successfully, you should see an output similar to the following on UART:
+If you are using some other debug key, the following instructions might not work out of the box, so you'll need to do a bit of research, but the main idea is to use the OpenOCD to connect to the BA51-H using GDB over the debug key.
+
+### Run the OpenOCD
+
+Run the OpenOCD server so that we'll be able to talk to the debug key using GDB:
+```bash
+openocd -f ../../scripts/openocd/crosscon_soc.openocd.cfg
+```
+
+You should see 
+```
+Open On-Chip Debugger 0.12.0-snapshot (2024-02-16-12:42)
+Licensed under GNU GPL v2
+For bug reports, read
+	http://openocd.org/doc/doxygen/bugs.html
+Info : clock speed 3000 kHz
+Info : TAP riscv.cpu does not have valid IDCODE (idcode=0xfffffffe)
+Info : datacount=2 progbufsize=0
+Warn : We won't be able to execute fence instructions on this target. Memory may not always appear consistent. (progbufsize=0, impebreak=0)
+Info : Examined RISC-V core; found 1 harts
+Info :  hart 0: XLEN=32, misa=0x401411a5
+Info : starting gdb server for riscv.cpu on 3333
+Info : Listening on port 3333 for gdb connections
+Ready for Remote Connections
+Info : Listening on port 6666 for tcl connections
+Info : Listening on port 4444 for telnet connections
+```
+
+Open another terminal.
+
+## Listen on UART
+
+In the case of Beyond's debug key, the UART port is exposed as a device file /dev/ttyUSBx.
+
+We'll use [tio](https://github.com/tio/tio) to interact with it. You can install the `tio` by running
+```bash
+sudo apt install tio
+```
+
+You can list the available /dev/ttyUSBx devices by running:
+```
+tio --list
+```
+
+You should see something similar to
+```
+Device            TID     Uptime [s] Driver           Description
+----------------- ---- ------------- ---------------- --------------------------
+/dev/ttyUSB1      aOSQ      9969.776 ftdi_sio         Digilent USB Device
+/dev/ttyUSB3      CJFY      9965.260 ftdi_sio         Debug Key
+```
+In the case of Beyond's debug key, we are looking for a device with `Debug Key` description.
+
+Once you know which device file is the right one, run
+```
+./listen_on_uart.sh /dev/ttyUSBx
+```
+where `/dev/ttyUSBx` is replaced with the actual device file path.
+
+You should see something similar to
+```
+[09:41:50.690] tio v3.3
+[09:41:50.690] Press ctrl-t q to quit
+[09:41:50.699] Connected to /dev/ttyUSB1
+```
+
+Open another terminal.
+
+## Upload the program using GDB and run the program.
+
+Run
+```
+./run_gdb.sh
+```
+
+You should see something similar to
+```
+GNU gdb (GDB) 15.0.50.20240107-git
+Copyright (C) 2023 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+Type "show copying" and "show warranty" for details.
+This GDB was configured as "--host=x86_64-pc-linux-gnu --target=riscv32-unknown-elf".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+<https://www.gnu.org/software/gdb/bugs/>.
+Find the GDB manual and other documentation resources online at:
+    <http://www.gnu.org/software/gdb/documentation/>.
+
+For help, type "help".
+Type "apropos word" to search for commands related to "word"...
+Reading symbols from Debug/cs_pg_example.elf...
+Remote debugging using localhost:3333
+_enter () at ../src/entry.S:38
+38		la gp, __global_pointer$
+TAP riscv.cpu does not have valid IDCODE (idcode=0xfffffffe)
+Loading section .init, size 0x196 lma 0x0
+Loading section .rodata, size 0x298 lma 0x198
+Loading section .text, size 0x3eb0 lma 0x430
+Loading section .data, size 0x544 lma 0x42e0
+Start address 0x00000000, load size 18466
+Transfer rate: 12 KB/sec, 3693 bytes/write.
+Continuing.
+```
+
+Now the program was executed and if you setup everything correctly, you should see the following on UART
 ```
 CROSSCON SoC: Running basic PG test ...
-
 Trying to read and write to SRAM ...
-
 Trying to access SRAM with the wrong DID ...
-
-Trying to read and write to SRAM with a different HDID ...
-
+Interrupt was raised.
+Trying to read and write to SRAM with a different DID ...
 Test completed successfully.
-
 ```
+
+Done.
 
 ## Licence
 

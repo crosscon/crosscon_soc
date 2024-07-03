@@ -30,14 +30,14 @@ S_UPPER_DEPS += \
 src/%.o: ../src/%.c src/subdir.mk
 	@echo 'Building file: $<'
 	@echo 'Invoking: RISC-V ELF GNU C compiler'
-	riscv32-unknown-elf-gcc -MMD -MT  "$@" -march=rv32ima_zicsr_zifencei_zca -mabi=ilp32 -mlittle-endian -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" -c -o "$@" "$<"
+	riscv32-unknown-elf-gcc -MMD -MT  "$@" -march=$(ARCH) -mabi=$(ABI) -mlittle-endian -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" -c -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
 src/%.o: ../src/%.S src/subdir.mk
 	@echo 'Building file: $<'
 	@echo 'Invoking: RISC-V ELF GNU C compiler'
-	riscv32-unknown-elf-gcc -MMD -MT  "$@" -march=rv32ima_zicsr_zifencei_zca -mabi=ilp32 -mlittle-endian -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" -c -o "$@" "$<"
+	riscv32-unknown-elf-gcc -MMD -MT  "$@" -march=$(ARCH) -mabi=$(ABI) -mlittle-endian -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" -c -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

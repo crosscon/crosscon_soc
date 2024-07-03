@@ -55,7 +55,7 @@ main-build: cs_pg_example.elf secondary-outputs
 cs_pg_example.elf: $(OBJS) $(USER_OBJS) makefile $(OPTIONAL_TOOL_DEPS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: RISC-V ELF GNU C linker'
-	riscv32-unknown-elf-gcc -march=rv32ima_zicsr_zifencei_zca -mabi=ilp32 -mlittle-endian -O0 -g3 -nostartfiles -T "../cs_pg_example.ld" -o "cs_pg_example.elf" $(OBJS) $(USER_OBJS) $(LIBS)
+	riscv32-unknown-elf-gcc -march=$(ARCH) -mabi=$(ABI) -mlittle-endian -O0 -g3 -nostartfiles -T "../cs_pg_example.ld" -o "cs_pg_example.elf" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

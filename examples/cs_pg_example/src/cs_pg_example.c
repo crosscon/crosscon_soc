@@ -119,7 +119,16 @@ void handle_external_interrupt() {
 }
 
 int main(void) {
+
     printf("CROSSCON SoC: Running basic PG test ...\n");
+
+    // Set DID of the core.
+    uint32_t *pg_add_sig_drv = (uint32_t*) PG_ADD_SIG_DRV_ADR;
+    pg_add_sig_drv[0] = 0;
+    if (pg_add_sig_drv[0] != 0) {
+        printf("Error: DID was not changed.\n");
+        return -1;
+    }
 
     //
     // Try to read and write to SRAM.
@@ -157,7 +166,6 @@ int main(void) {
     csr_set_mstatus(CSR_MSTATUS_F_MIE); // Enable global machine exceptions.
 
     // Change the DID of the core.
-    uint32_t *pg_add_sig_drv = (uint32_t*) PG_ADD_SIG_DRV_ADR;
     pg_add_sig_drv[0] = NEW_DID;
     if (pg_add_sig_drv[0] != NEW_DID) {
         printf("Error: Could not set new DID.\n");
@@ -170,7 +178,7 @@ int main(void) {
     // Wait for the interrupt to be handled.
     unsigned int cnt = 0;
     while (!interrupt_raised) {
-        if (10000 < cnt) {
+        if (100000 < cnt) {
             printf("Error: Interrupt was not raised.\n");
             return -1;
         }
@@ -190,7 +198,7 @@ int main(void) {
         printf("Error: Unexpected cause of the interrupt.\n");
         return -1;
     }
-
+	
     // Change the DID of the core.
     pg_add_sig_drv[0] = 0;
     if (pg_add_sig_drv[0] != 0) {
@@ -199,10 +207,11 @@ int main(void) {
     }
 
     // Release lock on SRAM.
-    if (!pg_lr_csrs[PG_RELEASE_REG]) {
+    if (pg_lr_csrs[PG_RELEASE_REG] != 1) {
         printf("Error: SRAM was not released.\n");
         return -1;
     }
+
 
     // When the lock is released, SRAM is reset.
 
@@ -219,7 +228,7 @@ int main(void) {
     // SRAM cannot be locked while it is being reset. Because of that, we
     // are just requesting the lock until is reset has been completed.
     cnt = 0;
-    while (!pg_lr_csrs[PG_LOCK_REG]) {
+    while (pg_lr_csrs[PG_LOCK_REG] != 1) {
         if (10000 < cnt) {
             printf("Error: SRAM could not be relocked.\n");
             return -1;
@@ -246,6 +255,12 @@ int main(void) {
     if ((buf32[0] != 0x12345678) || (buf32[1] != 0x9abcdef0)
             || (buf32[2] != 0x6ab9cef1) || (buf32[3] != 0x13def547)) {
         printf("Error: Read unexpected values from SRAM.\n");
+        return -1;
+    }
+
+    // Release lock on SRAM.
+    if (pg_lr_csrs[PG_RELEASE_REG] != 1) {
+        printf("Error: SRAM was not released.\n");
         return -1;
     }
 
