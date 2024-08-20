@@ -66,7 +66,7 @@ Checkout the [RISC-V toolcahin](https://github.com/riscv/riscv-gnu-toolchain) re
 git clone https://github.com/riscv/riscv-gnu-toolchain
 cd riscv-gnu-toolchain
 mkdir install_dir
-./configure --prefix=$(pwd)/install_dir --with-arch=rv32imacf_zca_zcb_zcf --with-abi=ilp32f
+./configure --prefix=$(pwd)/install_dir --with-arch=rv32imafc_zicsr_zifencei_zca --with-abi=ilp32f --with-target-cflags=-g --with-target-cxxflags=-g '--with-multilib-generator=rv32imac-ilp32--; rv32imafc_zca-ilp32--; rv32imac_zicsr_zifencei_zca-ilp32--;'
 make
 ```
 
