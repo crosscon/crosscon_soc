@@ -21,7 +21,7 @@ A more detailed description of the CROSSCON SoC, BA51-H and PG can be found in d
 
 ## Running the examples
 
-You can try out the CROSSCON SoC by running it on the Arty-A7 100T board with one of the example programs. To run an example you need to:
+You can try out the CROSSCON SoC by running it on the Arty-A7 100T board with one of the example programs located in `crosscon_soc/examples`. To run an example you need to:
 1. Upload the CROSSCON SoC's bitstream to the Arty-A7 100T board.
 2. Build the example for the BA51-H core.
 3. Connect a debug key to the BA51-H, upload the binary of the example and run it.
@@ -189,7 +189,7 @@ You should see something similar to
 
 Open another terminal.
 
-## Upload the program using GDB and run the program.
+## Upload and run the program using GDB
 
 Run
 ```
@@ -227,7 +227,7 @@ Transfer rate: 12 KB/sec, 3693 bytes/write.
 Continuing.
 ```
 
-Now the program was executed and if you setup everything correctly, you should see the following on UART
+Now the program was executed and if you setup everything correctly, you should see the following output on UART
 ```
 CROSSCON SoC: Running basic PG test ...
 Trying to read and write to SRAM ...

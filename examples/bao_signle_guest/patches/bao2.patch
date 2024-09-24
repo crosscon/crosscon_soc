@@ -1,0 +1,99 @@
+diff --git a/src/platform/crosscon_soc/inc/plat/platform.h b/src/platform/crosscon_soc/inc/plat/platform.h
+new file mode 100644
+index 0000000..3901487
+--- /dev/null
++++ b/src/platform/crosscon_soc/inc/plat/platform.h
+@@ -0,0 +1,18 @@
++/**
++ * SPDX-License-Identifier: Apache-2.0
++ * Copyright (c) Bao Project and Contributors. All rights reserved
++ */
++
++#ifndef __PLAT_PLATFORM_H__
++#define __PLAT_PLATFORM_H__
++
++#include <drivers/sbi_uart.h>
++
++#define CPU_EXT_SSTC 1
++
++#define IPIC_SBI     (1)
++#define IPIC_ACLINT  (2)
++
++#define PLAT_TIMER_FREQ (25000000ull) //25MHz
++
++#endif
+diff --git a/src/platform/crosscon_soc/objects.mk b/src/platform/crosscon_soc/objects.mk
+new file mode 100644
+index 0000000..5350608
+--- /dev/null
++++ b/src/platform/crosscon_soc/objects.mk
+@@ -0,0 +1,4 @@
++## SPDX-License-Identifier: Apache-2.0
++## Copyright (c) Bao Project and Contributors. All rights reserved.
++
++boards-objs-y+=spike_desc.o
+diff --git a/src/platform/crosscon_soc/platform.mk b/src/platform/crosscon_soc/platform.mk
+new file mode 100644
+index 0000000..00f2dac
+--- /dev/null
++++ b/src/platform/crosscon_soc/platform.mk
+@@ -0,0 +1,28 @@
++## SPDX-License-Identifier: Apache-2.0
++## Copyright (c) Bao Project and Contributors. All rights reserved.
++
++# Architecture definition
++ARCH:=riscv
++# CPU definition
++CPU:=
++# Interrupt controller definition
++IRQC:=PLIC
++# Core IPIs controller
++IPIC:=IPIC_SBI
++
++drivers := sbi_uart
++
++platform_description:=spike_desc.c
++
++arch_mem_prot:=mpu
++
++platform-cppflags =-DIPIC=$(IPIC)
++platform-cflags =
++platform-asflags =
++platform-ldflags =
++
++riscv_march:=rv32imafch_sstc
++riscv_mabi:=ilp32f
++
++#riscv_march:=rv32imafc_zca_zcb_zcf
++#riscv_mabi:=ilp32f
+diff --git a/src/platform/crosscon_soc/spike_desc.c b/src/platform/crosscon_soc/spike_desc.c
+new file mode 100644
+index 0000000..61a090c
+--- /dev/null
++++ b/src/platform/crosscon_soc/spike_desc.c
+@@ -0,0 +1,25 @@
++/**
++ * SPDX-License-Identifier: Apache-2.0
++ * Copyright (c) Bao Project and Contributors. All rights reserved.
++ */
++
++#include <bao.h>
++#include <platform.h>
++
++struct platform platform = {
++
++    .cpu_num = 1,
++
++    .region_num = 1,
++    .regions =  (struct mem_region[]) {
++        {
++            .base = 0x40000,
++            .size = 0x40000,
++        },
++    },
++
++    .arch = {
++        .irqc.plic.base = 0xc000000,
++    },
++
++};

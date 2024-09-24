@@ -1,0 +1,53 @@
+diff --git a/lib/sbi/sbi_init.c b/lib/sbi/sbi_init.c
+index 804b01c..5eef5dc 100644
+--- a/lib/sbi/sbi_init.c
++++ b/lib/sbi/sbi_init.c
+@@ -286,6 +286,10 @@ static void __noreturn init_coldboot(struct sbi_scratch *scratch, u32 hartid)
+ 	if (rc)
+ 		sbi_hart_hang();
+ 
++	rc = sbi_console_init(scratch);
++	if (rc)
++		sbi_hart_hang();
++
+ 	/* Note: This has to be the third thing in coldboot init sequence */
+ 	rc = sbi_domain_init(scratch, hartid);
+ 	if (rc)
+@@ -314,10 +318,6 @@ static void __noreturn init_coldboot(struct sbi_scratch *scratch, u32 hartid)
+ 	if (rc)
+ 		sbi_hart_hang();
+ 
+-	rc = sbi_console_init(scratch);
+-	if (rc)
+-		sbi_hart_hang();
+-
+ 	rc = sbi_pmu_init(scratch, true);
+ 	if (rc) {
+ 		sbi_printf("%s: pmu init failed (error %d)\n",
+diff --git a/lib/utils/serial/Kconfig b/lib/utils/serial/Kconfig
+index e3589ca..db7a728 100644
+--- a/lib/utils/serial/Kconfig
++++ b/lib/utils/serial/Kconfig
+@@ -92,4 +92,12 @@ config SERIAL_SEMIHOSTING
+ 	bool "Semihosting support"
+ 	default n
+ 
++config SERIAL_BEYOND_SIMUART
++	bool "Beyond simulated UART support"
++	default n
++
++config SERIAL_BEYOND_CS_UART
++	bool "Beyond CROSSCON SoC UART support"
++	default n
++
+ endmenu
+diff --git a/lib/utils/serial/objects.mk b/lib/utils/serial/objects.mk
+index 1e6bd2e..a7a1d5b 100644
+--- a/lib/utils/serial/objects.mk
++++ b/lib/utils/serial/objects.mk
+@@ -46,3 +46,5 @@ libsbiutils-objs-$(CONFIG_SERIAL_LITEX) += serial/litex-uart.o
+ libsbiutils-objs-$(CONFIG_SERIAL_UART8250) += serial/uart8250.o
+ libsbiutils-objs-$(CONFIG_SERIAL_XILINX_UARTLITE) += serial/xlnx-uartlite.o
+ libsbiutils-objs-$(CONFIG_SERIAL_SEMIHOSTING) += serial/semihosting.o
++libsbiutils-objs-$(CONFIG_SERIAL_BEYOND_SIMUART) += serial/beyond_simuart.o
++libsbiutils-objs-$(CONFIG_SERIAL_BEYOND_CS_UART) += serial/beyond_cs_uart.o
