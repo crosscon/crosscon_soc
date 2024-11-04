@@ -1,0 +1,320 @@
+diff -Ncr bao-hypervisor-fresh/Makefile bao-hypervisor/Makefile
+*** bao-hypervisor-fresh/Makefile	2024-11-04 13:21:14.627560906 +0100
+--- bao-hypervisor/Makefile	2024-11-04 13:24:43.351725962 +0100
+***************
+*** 25,32 ****
+  HOST_CC:=gcc
+  
+  #Makefile arguments and default values
+! DEBUG:=n
+! OPTIMIZATIONS:=2
+  CONFIG=
+  PLATFORM=
+  
+--- 25,32 ----
+  HOST_CC:=gcc
+  
+  #Makefile arguments and default values
+! DEBUG:=y
+! OPTIMIZATIONS:=0
+  CONFIG=
+  PLATFORM=
+  
+diff -Ncr bao-hypervisor-fresh/src/arch/riscv/arch.mk bao-hypervisor/src/arch/riscv/arch.mk
+*** bao-hypervisor-fresh/src/arch/riscv/arch.mk	2024-11-04 13:21:14.632560915 +0100
+--- bao-hypervisor/src/arch/riscv/arch.mk	2024-11-04 13:24:43.345725962 +0100
+***************
+*** 35,41 ****
+  arch-cppflags+=-DRV_XLEN=32
+  endif
+  arch-cppflags+=-DIRQC=$(IRQC)
+! arch-cflags = -mcmodel=medany -march=$(riscv_march) -mstrict-align
+  arch-asflags =
+  arch-ldflags = 
+  
+--- 35,41 ----
+  arch-cppflags+=-DRV_XLEN=32
+  endif
+  arch-cppflags+=-DIRQC=$(IRQC)
+! arch-cflags = -mcmodel=medany -march=$(riscv_march) -mstrict-align  -mabi=$(riscv_mabi)
+  arch-asflags =
+  arch-ldflags = 
+  
+diff -Ncr bao-hypervisor-fresh/src/arch/riscv/irqc/plic/inc/irqc.h bao-hypervisor/src/arch/riscv/irqc/plic/inc/irqc.h
+*** bao-hypervisor-fresh/src/arch/riscv/irqc/plic/inc/irqc.h	2024-11-04 13:21:14.633560916 +0100
+--- bao-hypervisor/src/arch/riscv/irqc/plic/inc/irqc.h	2024-11-04 13:24:43.344725961 +0100
+***************
+*** 18,45 ****
+  
+  static inline void irqc_init()
+  {
+!     plic_init();
+  }
+  
+  static inline void irqc_cpu_init()
+  {
+!     plic_cpu_init();
+  }
+  
+  static inline void irqc_config_irq(irqid_t int_id, bool en)
+  {
+!     plic_set_enbl(cpu()->arch.plic_cntxt, int_id, en);
+!     plic_set_prio(int_id, 0xFE);
+  }
+  
+  static inline void irqc_handle()
+  {
+!     plic_handle();
+  }
+  
+  static inline bool irqc_get_pend(irqid_t int_id)
+  {
+!     return plic_get_pend(int_id);
+  }
+  
+  static inline void irqc_clr_pend(irqid_t int_id)
+--- 18,46 ----
+  
+  static inline void irqc_init()
+  {
+!     //plic_init();
+  }
+  
+  static inline void irqc_cpu_init()
+  {
+!     //plic_cpu_init();
+  }
+  
+  static inline void irqc_config_irq(irqid_t int_id, bool en)
+  {
+!     //plic_set_enbl(cpu()->arch.plic_cntxt, int_id, en);
+!     //plic_set_prio(int_id, 0xFE);
+  }
+  
+  static inline void irqc_handle()
+  {
+!     //plic_handle();
+  }
+  
+  static inline bool irqc_get_pend(irqid_t int_id)
+  {
+!     //return plic_get_pend(int_id);
+!     return false;
+  }
+  
+  static inline void irqc_clr_pend(irqid_t int_id)
+***************
+*** 49,55 ****
+  
+  static inline void virqc_set_hw(struct vm* vm, irqid_t id)
+  {
+!     vplic_set_hw(vm, id);
+  }
+  
+  #endif // IRQC_H
+--- 50,56 ----
+  
+  static inline void virqc_set_hw(struct vm* vm, irqid_t id)
+  {
+!     //vplic_set_hw(vm, id);
+  }
+  
+  #endif // IRQC_H
+diff -Ncr bao-hypervisor-fresh/src/arch/riscv/spmp/spmp.c bao-hypervisor/src/arch/riscv/spmp/spmp.c
+*** bao-hypervisor-fresh/src/arch/riscv/spmp/spmp.c	2024-11-04 13:21:14.634560918 +0100
+--- bao-hypervisor/src/arch/riscv/spmp/spmp.c	2024-11-04 13:24:43.344725961 +0100
+***************
+*** 469,478 ****
+  
+  void mpu_init() {
+  
+!     ssize_t nentries = bit64_ffs(~csrs_spmpswitch_read());
+!     if (nentries < 0) {
+!         nentries = 64;
+!     }
+  
+      // We count one less entry as we reserve the last entry as a "block anything" entry for
+      // the hypervisor, so that other entries can be seen as whitelist
+--- 469,479 ----
+  
+  void mpu_init() {
+  
+!     ssize_t nentries = 32;
+!     //ssize_t nentries = bit64_ffs(~csrs_spmpswitch_read());
+!     //if (nentries < 0) {
+!     //    nentries = 64;
+!     //}
+  
+      // We count one less entry as we reserve the last entry as a "block anything" entry for
+      // the hypervisor, so that other entries can be seen as whitelist
+diff -Ncr bao-hypervisor-fresh/src/arch/riscv/sync_exceptions.c bao-hypervisor/src/arch/riscv/sync_exceptions.c
+*** bao-hypervisor-fresh/src/arch/riscv/sync_exceptions.c	2024-11-04 13:21:14.635560919 +0100
+--- bao-hypervisor/src/arch/riscv/sync_exceptions.c	2024-11-04 13:24:43.345725962 +0100
+***************
+*** 13,23 ****
+  void internal_exception_handler(unsigned long gprs[])
+  {
+      for (int i = 0; i < 31; i++) {
+!         console_printk("x%d:\t\t0x%0lx\n", i, gprs[i]);
+      }
+!     console_printk("sstatus:\t0x%0lx\n", csrs_sstatus_read());
+!     console_printk("stval:\t\t0x%0lx\n", csrs_stval_read());
+!     console_printk("sepc:\t\t0x%0lx\n", csrs_sepc_read());
+      ERROR("cpu%d internal hypervisor abort - PANIC\n", cpu()->id);
+  }
+  
+--- 13,23 ----
+  void internal_exception_handler(unsigned long gprs[])
+  {
+      for (int i = 0; i < 31; i++) {
+!         console_printk("x%d:\t\t0x%x\n", i, gprs[i]);
+      }
+!     console_printk("sstatus:\t0x%x\n", csrs_sstatus_read());
+!     console_printk("stval:\t\t0x%x\n", csrs_stval_read());
+!     console_printk("sepc:\t\t0x%x\n", csrs_sepc_read());
+      ERROR("cpu%d internal hypervisor abort - PANIC\n", cpu()->id);
+  }
+  
+diff -Ncr bao-hypervisor-fresh/src/core/init.c bao-hypervisor/src/core/init.c
+*** bao-hypervisor-fresh/src/core/init.c	2024-11-04 13:21:14.636560921 +0100
+--- bao-hypervisor/src/core/init.c	2024-11-04 13:24:43.346725962 +0100
+***************
+*** 22,32 ****
+       */
+  
+      cpu_init(cpu_id, load_addr);
+      mem_init(load_addr);
+  
+      /* -------------------------------------------------------------- */
+  
+!     console_init();
+  
+      if (cpu_is_master()) {
+          console_printk("Bao Hypervisor\n\r");
+--- 22,35 ----
+       */
+  
+      cpu_init(cpu_id, load_addr);
++ 
++     console_init();
++ 
+      mem_init(load_addr);
+  
+      /* -------------------------------------------------------------- */
+  
+!     //console_init();
+  
+      if (cpu_is_master()) {
+          console_printk("Bao Hypervisor\n\r");
+diff -Ncr bao-hypervisor-fresh/src/core/vmm.c bao-hypervisor/src/core/vmm.c
+*** bao-hypervisor-fresh/src/core/vmm.c	2024-11-04 13:21:14.637560922 +0100
+--- bao-hypervisor/src/core/vmm.c	2024-11-04 13:24:43.346725962 +0100
+***************
+*** 201,206 ****
+--- 201,207 ----
+      bool master = false;
+      vmid_t vm_id = -1;
+      while (vmm_get_next_assigned_vm(&master, &vm_id)) {
++         INFO("Initializing VM %d ... \n", vm_id);
+          struct vm_allocation* vm_alloc = vmm_alloc_install_vm(vm_id, master);
+          struct vm_config* vm_config = &config.vmlist[vm_id];
+          vm_init(vm_alloc, vm_config, master, vm_id);
+diff -Ncr bao-hypervisor-fresh/src/platform/crosscon_soc/inc/plat/platform.h bao-hypervisor/src/platform/crosscon_soc/inc/plat/platform.h
+*** bao-hypervisor-fresh/src/platform/crosscon_soc/inc/plat/platform.h	1970-01-01 01:00:00.000000000 +0100
+--- bao-hypervisor/src/platform/crosscon_soc/inc/plat/platform.h	2024-11-04 13:24:43.351725962 +0100
+***************
+*** 0 ****
+--- 1,18 ----
++ /**
++  * SPDX-License-Identifier: Apache-2.0
++  * Copyright (c) Bao Project and Contributors. All rights reserved
++  */
++ 
++ #ifndef __PLAT_PLATFORM_H__
++ #define __PLAT_PLATFORM_H__
++ 
++ #include <drivers/sbi_uart.h>
++ 
++ #define CPU_EXT_SSTC 1
++ 
++ #define IPIC_SBI     (1)
++ #define IPIC_ACLINT  (2)
++ 
++ #define PLAT_TIMER_FREQ (25000000ull) //25MHz
++ 
++ #endif
+diff -Ncr bao-hypervisor-fresh/src/platform/crosscon_soc/objects.mk bao-hypervisor/src/platform/crosscon_soc/objects.mk
+*** bao-hypervisor-fresh/src/platform/crosscon_soc/objects.mk	1970-01-01 01:00:00.000000000 +0100
+--- bao-hypervisor/src/platform/crosscon_soc/objects.mk	2024-11-04 13:24:43.351725962 +0100
+***************
+*** 0 ****
+--- 1,4 ----
++ ## SPDX-License-Identifier: Apache-2.0
++ ## Copyright (c) Bao Project and Contributors. All rights reserved.
++ 
++ boards-objs-y+=spike_desc.o
+diff -Ncr bao-hypervisor-fresh/src/platform/crosscon_soc/platform.mk bao-hypervisor/src/platform/crosscon_soc/platform.mk
+*** bao-hypervisor-fresh/src/platform/crosscon_soc/platform.mk	1970-01-01 01:00:00.000000000 +0100
+--- bao-hypervisor/src/platform/crosscon_soc/platform.mk	2024-11-04 13:24:43.351725962 +0100
+***************
+*** 0 ****
+--- 1,28 ----
++ ## SPDX-License-Identifier: Apache-2.0
++ ## Copyright (c) Bao Project and Contributors. All rights reserved.
++ 
++ # Architecture definition
++ ARCH:=riscv
++ # CPU definition
++ CPU:=
++ # Interrupt controller definition
++ IRQC:=PLIC
++ # Core IPIs controller
++ IPIC:=IPIC_SBI
++ 
++ drivers := sbi_uart
++ 
++ platform_description:=spike_desc.c
++ 
++ arch_mem_prot:=mpu
++ 
++ platform-cppflags =-DIPIC=$(IPIC)
++ platform-cflags =
++ platform-asflags =
++ platform-ldflags =
++ 
++ riscv_march:=rv32imafch_sstc
++ riscv_mabi:=ilp32f
++ 
++ #riscv_march:=rv32imafc_zca_zcb_zcf
++ #riscv_mabi:=ilp32f
+diff -Ncr bao-hypervisor-fresh/src/platform/crosscon_soc/spike_desc.c bao-hypervisor/src/platform/crosscon_soc/spike_desc.c
+*** bao-hypervisor-fresh/src/platform/crosscon_soc/spike_desc.c	1970-01-01 01:00:00.000000000 +0100
+--- bao-hypervisor/src/platform/crosscon_soc/spike_desc.c	2024-11-04 13:24:43.351725962 +0100
+***************
+*** 0 ****
+--- 1,25 ----
++ /**
++  * SPDX-License-Identifier: Apache-2.0
++  * Copyright (c) Bao Project and Contributors. All rights reserved.
++  */
++ 
++ #include <bao.h>
++ #include <platform.h>
++ 
++ struct platform platform = {
++ 
++     .cpu_num = 1,
++ 
++     .region_num = 1,
++     .regions =  (struct mem_region[]) {
++         {
++             .base = 0x30000,
++             .size = 0x50000,
++         },
++     },
++ 
++     .arch = {
++         .irqc.plic.base = 0xc000000,
++     },
++ 
++ };

@@ -1,4 +1,4 @@
-    /** 
+/** 
  * Bao, a Lightweight Static Partitioning Hypervisor 
  *
  * Copyright (c) Bao Project (www.bao-project.org), 2019-
@@ -48,8 +48,6 @@ void timer_handler(){
 void main(void){
 
     static volatile bool master_done = false;
-
-    uart_init();
 
     if(cpu_is_master()){
         spin_lock(&print_lock);

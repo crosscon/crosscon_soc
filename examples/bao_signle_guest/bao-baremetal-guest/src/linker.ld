@@ -52,7 +52,6 @@ SECTIONS {
 
     . = ALIGN(16);
     PROVIDE(_stack_base = .);
-    /*. = . + 2M; */ /* 2M of total stack size */
-    . = . + 16K; /* Because of the memory restrictions we only allocate 16K. */
+    . = . + 10K; /* 10K of total stack size */
     PROVIDE(_heap_base = .);
 }

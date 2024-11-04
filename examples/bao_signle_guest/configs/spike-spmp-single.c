@@ -7,9 +7,9 @@ struct config config = {
     .vmlist_size = 1,
     .vmlist = {
         {
-            .image = VM_IMAGE_BUILTIN(baremetal_image, 0x70000),
+            .image = VM_IMAGE_BUILTIN(baremetal_image, 0x60000),
 
-            .entry = 0x70000,
+            .entry = 0x60000,
 
             .platform = {
 
@@ -18,7 +18,7 @@ struct config config = {
                 .region_num = 1,
                 .regions = (struct vm_mem_region[]) {
                     {
-		                .base = 0x70000,
+		                .base = 0x60000,
                         .size = 0x0ffff,
                     },
                 },

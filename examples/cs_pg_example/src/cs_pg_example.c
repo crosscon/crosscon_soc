@@ -149,6 +149,8 @@ int main(void) {
     buf32[2] = 0x6ab9cef1;
     buf32[3] = 0x13def547;
 
+    printf("0 =  %"PRIu32", 1 = %"PRIu32", 2 =  %"PRIu32", 3 =  %"PRIu32"\n", buf32[0], buf32[1], buf32[2], buf32[3]);
+
     if ((buf32[0] != 0x12345678) || (buf32[1] != 0x9abcdef0)
             || (buf32[2] != 0x6ab9cef1) || (buf32[3] != 0x13def547)) {
         printf("Error: Unexpected value read from SRAM.\n");
