@@ -1,6 +1,6 @@
 # Bao hypervisor with a single guest example
 
-Here you can find an example setup that allows you to run Bao with a single guest on top of the CROSSCON SoC.
+Here you can find an example setup that allows you to run Bao with one or two guests on top of the CROSSCON SoC.
 
 ## Prerequisites
 
@@ -10,14 +10,19 @@ Note that the path to the RISC-V cross-compilation toolchain should be available
 
 ## Setup and compile
 
-Move to the directory in which this file is located and run 
+Move into the example's directory and run
 ```
 ./setup.sh
 ```
-to setup the source files. Compile the source files by running
+to setup the source files. Compile an example with one or two guests by running
 ```
-./build.sh
+./build_with_one_guests.sh 
 ```
+or
+```
+./build_with_two_guests.sh
+```
+respectively.
 
 ## Upload and run
 
@@ -59,7 +64,7 @@ Transfer rate: 12 KB/sec, 12370 bytes/write.
 Continuing.
 ```
 
-Now the program was executed and if you setup everything correctly, you should see the following output on UART
+Now the program was executed. If you setup everything correctly and you compiled an example with two guest VMs, you should see the following output on UART
 ```
 OpenSBI v1.4-31-g322b598
    ____                    _____ ____ _____
@@ -84,11 +89,11 @@ Platform Shutdown Device  : ---
 Platform Suspend Device   : ---
 Platform CPPC Device      : ---
 Firmware Base             : 0x0
-Firmware Size             : 178 KB
+Firmware Size             : 157 KB
 Firmware RW Offset        : 0x20000
-Firmware RW Size          : 50 KB
-Firmware Heap Offset      : 0x24000
-Firmware Heap Size        : 34 KB (total), 2 KB (reserved), 9 KB (used), 22 KB (free)
+Firmware RW Size          : 29 KB
+Firmware Heap Offset      : 0x23000
+Firmware Heap Size        : 17 KB (total), 1 KB (reserved), 9 KB (used), 6 KB (free)
 Firmware Scratch Size     : 4096 B (total), 172 B (used), 3924 B (free)
 Runtime SBI Version       : 2.0
 
@@ -96,11 +101,11 @@ Domain0 Name              : root
 Domain0 Boot HART         : 0
 Domain0 HARTs             : 0*
 Domain0 Region00          : 0x02008000-0x0200bfff M: (I,R,W) S/U: ()
-Domain0 Region01          : 0x02000000-0x02007fff M: (I,R,W) S/U: ()
-Domain0 Region02          : 0x00020000-0x0002ffff M: (R,W) S/U: ()
+Domain0 Region01          : 0x00020000-0x00027fff M: (R,W) S/U: ()
+Domain0 Region02          : 0x02000000-0x02007fff M: (I,R,W) S/U: ()
 Domain0 Region03          : 0x00000000-0x0001ffff M: (R,X) S/U: ()
 Domain0 Region04          : 0x00000000-0xffffffff M: () S/U: (R,W,X)
-Domain0 Next Address      : 0x00040000
+Domain0 Next Address      : 0x00030000
 Domain0 Next Arg1         : 0x00000000
 Domain0 Next Mode         : S-mode
 Domain0 SysReset          : yes
@@ -122,15 +127,24 @@ Bao Hypervisor
 BAO INFO: Initializing VM 0 ... 
 
 BAO WARNING: trying to flush caches but the operation is not defined for this platform
+BAO INFO: Initializing VM 1 ... 
+
+BAO WARNING: trying to flush caches but the operation is not defined for this platform
 [guest 0] Bao bare-metal test guest
 [guest 0] cpu 0 up
+[guest 1] Bao bare-metal test guest
+[guest 1] cpu 0 up
 [guest 0] cpu0: timer_handler
+[guest 1] cpu0: timer_handler
 [guest 0] cpu0: timer_handler
+[guest 1] cpu0: timer_handler
 [guest 0] cpu0: timer_handler
+[guest 1] cpu0: timer_handler
 [guest 0] cpu0: timer_handler
+[guest 1] cpu0: timer_handler
 [guest 0] cpu0: timer_handler
+[guest 1] cpu0: timer_handler
 [guest 0] cpu0: timer_handler
-[guest 0] cpu0: timer_handler
-[guest 0] cpu0: timer_handler
+[guest 1] cpu0: timer_handler
 ...
 ```

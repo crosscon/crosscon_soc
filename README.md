@@ -43,7 +43,7 @@ Connect the Arty-A7 board with your PC using a USB-to-micro-USB cable via the US
 
 Upload the bitstream by going to the `crosscon_soc/scripts/upload_bits` folder and running:
 ```bash
-./upload.sh ../../bits/crosscon_soc_a7_v0.1.bit
+./upload.sh ../../bits/crosscon_soc_a7_v0.2.bit
 ```
 
 If the bitstream was uploaded successfully, you should see an output similar to the following:
