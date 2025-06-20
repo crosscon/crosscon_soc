@@ -134,7 +134,7 @@ msg = 'Test message of the guest vm 1. Test message of the guest vm 1. Test mess
 Figure 1 shows the basic architecture of the CROSSCON SoC in the `crosscon_soc_a7_v0.4.2.bit` bitstream.
 
 <p align="center">
-    <img src="../../imgs/crosscon_soc_0.4.2_architecture.png" width=70% height=70%>
+    <img src="../../imgs/crosscon_soc_0.4.2_architecture.png" width=55% height=55%>
 </p>
 <p align="center">Figure 1: CROSSCON SoC architecture of the bitstream 0.4.2</p>
 
