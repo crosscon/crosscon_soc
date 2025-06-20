@@ -1,4 +1,4 @@
-# Bao hypervisor with a single guest example
+# CROSSCON Hypervisor with AES-GCM accelerator example
 
 Here you can find an example setup of CROSSCON Hypervisor with two guests VMs that are using the AES-GCM accelerator at the same time.
 
