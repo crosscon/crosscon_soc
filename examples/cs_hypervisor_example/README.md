@@ -1,6 +1,6 @@
-# Bao hypervisor with a single guest example
+# CROSSCON Hypervisor with two guests example
 
-Here you can find an example setup that allows you to run CROSSCON Hypervisor with one or two guests on top of the CROSSCON SoC.
+Here you can find an example setup that allows you to run CROSSCON Hypervisor two guests on top of the CROSSCON SoC.
 
 ## Prerequisites
 
@@ -14,7 +14,7 @@ Move into the example's directory and run
 ```
 ./setup.sh
 ```
-to setup the source files. Compile an example with two guests by running
+to setup the source files. You can compile the code by running
 ```
 ./build.sh 
 ```
