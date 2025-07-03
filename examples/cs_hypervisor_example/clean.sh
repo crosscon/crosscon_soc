@@ -1,9 +1,7 @@
 #!/bin/bash
 
-rm -fr bao-baremetal-guest/build
-rm -fr bao-baremetal-guest2/build
+rm -fr baremetal-guest/build
+rm -fr baremetal-guest2/build
 rm -fr opensbi/build
 
-cd CROSSCON-Hypervisor
-make clean
-cd ..
+(cd CROSSCON-Hypervisor && make clean)

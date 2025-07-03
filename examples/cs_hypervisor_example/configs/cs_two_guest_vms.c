@@ -1,6 +1,6 @@
 #include <config.h>
 
-#include <arch/crosscon_soc.h>
+#include <crosscon_soc.h>
 
 VM_IMAGE(baremetal_image, "../baremetal-guest/build/crosscon_soc/baremetal.bin")
 VM_IMAGE(baremetal2_image, "../baremetal-guest2/build/crosscon_soc/baremetal.bin")
@@ -23,20 +23,34 @@ struct vm_config vm1 = {
             },
         },
 
-        .dev_num = 2,
+        .dev_num = 4,
         .devs = (struct vm_dev_region[]) {
             {
                 // UART
-                .pa = 0x10700000,
-                .va = 0x10700000,
+                .pa = UART_BASE_ADR,
+                .va = UART_BASE_ADR,
                 .size = 0xfffff,
                 .interrupt_num = 0,
             },
             {
                 // AES-GCM
-                .pa = AES_MM_CFG_BASE_ADR,
-                .va = AES_MM_CFG_BASE_ADR,
+                .pa = AES_GCM_CFG_BASE_ADR,
+                .va = AES_GCM_CFG_BASE_ADR,
                 .size = 0xfffff,
+                .interrupt_num = 0,
+            },
+            {
+                // SRAM
+                .pa = SRAM_BASE_ADR,
+                .va = SRAM_BASE_ADR,
+                .size = 0xffffff,
+                .interrupt_num = 0,
+            },
+            {
+                // SRAM's PG lock-release mechanism
+                .pa = SRAM_PG_LR_BASE_ADR,
+                .va = SRAM_PG_LR_BASE_ADR,
+                .size = 0xffffff,
                 .interrupt_num = 0,
             }
         },
@@ -67,24 +81,37 @@ struct vm_config vm2 = {
             },
         },
 
-        .dev_num = 2,
+        .dev_num = 4,
         .devs = (struct vm_dev_region[]) {
             {
                 // UART
-                .pa = 0x10700000,
-                .va = 0x10700000,
+                .pa = UART_BASE_ADR,
+                .va = UART_BASE_ADR,
                 .size = 0xfffff,
                 .interrupt_num = 0,
             },
             {
                 // AES-GCM
-                .pa = AES_MM_CFG_BASE_ADR,
-                .va = AES_MM_CFG_BASE_ADR,
+                .pa = AES_GCM_CFG_BASE_ADR,
+                .va = AES_GCM_CFG_BASE_ADR,
                 .size = 0xfffff,
+                .interrupt_num = 0,
+            },
+            {
+                // SRAM
+                .pa = SRAM_BASE_ADR,
+                .va = SRAM_BASE_ADR,
+                .size = 0xffffff,
+                .interrupt_num = 0,
+            },
+            {
+                // SRAM's PG lock-release mechanism
+                .pa = SRAM_PG_LR_BASE_ADR,
+                .va = SRAM_PG_LR_BASE_ADR,
+                .size = 0xffffff,
                 .interrupt_num = 0,
             }
         },
-
         .arch = {
             .irqc.plic = {
                 .base = 0xc000000,

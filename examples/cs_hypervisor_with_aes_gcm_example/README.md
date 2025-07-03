@@ -4,7 +4,7 @@ Here you can find an example setup of CROSSCON Hypervisor with two guests VMs th
 
 ## Prerequisites
 
-Follow the instruction in [README.md](../../README.md) to setup the cross-compilation toolchain, connect the Arty-A7 board and upload the `crosscon_soc_a7_v0.4.2.bit` bitstream. Note that this bitstream has an different version of the CROSSCON SoC which architecture is described down below.
+Follow the instruction in [README.md](../../README.md) to setup the cross-compilation toolchain, connect the Arty-A7 board and upload the `crosscon_soc_a7_v0.4.4.bit` bitstream. Note that this bitstream has an different version of the CROSSCON SoC which architecture is described down below.
 
 Note that the path to the RISC-V cross-compilation toolchain should be available through `RISCV` variable as described in Setup the RISC-V toolchain section of [README.md](../../README.md).
 
@@ -131,10 +131,10 @@ msg = 'Test message of the guest vm 1. Test message of the guest vm 1. Test mess
 
 ## SoC architecture
 
-Figure 1 shows the basic architecture of the CROSSCON SoC in the `crosscon_soc_a7_v0.4.2.bit` bitstream.
+Figure 1 shows the basic architecture of the CROSSCON SoC in the `crosscon_soc_a7_v0.4.4.bit` bitstream.
 
 <p align="center">
-    <img src="../../imgs/crosscon_soc_0.4.2_architecture.png" width=70% height=70%>
+    <img src="../../imgs/crosscon_soc_0.4.4_architecture.png" width=70% height=70%>
 </p>
 <p align="center">Figure 1: CROSSCON SoC architecture of the bitstream 0.4.2</p>
 

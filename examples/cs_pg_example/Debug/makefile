@@ -32,7 +32,7 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := cs_pg_example
+BUILD_ARTIFACT_NAME := main
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
@@ -42,38 +42,38 @@ BA_SIZE_DISPLAY += \
 rv-size-display \
 
 BA_OBJCOPY_OUTPUT += \
-cs_pg_example.dat \
+main.dat \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: cs_pg_example.elf secondary-outputs
+main-build: main.elf secondary-outputs
 
 # Tool invocations
-cs_pg_example.elf: $(OBJS) $(USER_OBJS) makefile $(OPTIONAL_TOOL_DEPS)
+main.elf: $(OBJS) $(USER_OBJS) makefile $(OPTIONAL_TOOL_DEPS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: RISC-V ELF GNU C linker'
-	riscv32-unknown-elf-gcc -march=$(ARCH) -mabi=$(ABI) -mlittle-endian -O0 -g3 -nostartfiles -T "../cs_pg_example.ld" -o "cs_pg_example.elf" $(OBJS) $(USER_OBJS) $(LIBS)
+	riscv32-unknown-elf-gcc -march=$(ARCH) -mabi=$(ABI) -mlittle-endian -O0 -g3 -nostartfiles -T "../main.ld" -o "main.elf" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
-rv-size-display: cs_pg_example.elf makefile $(OPTIONAL_TOOL_DEPS)
+rv-size-display: main.elf makefile $(OPTIONAL_TOOL_DEPS)
 	@echo 'Showing the size of executable'
-	riscv32-unknown-elf-size -B "cs_pg_example.elf"
+	riscv32-unknown-elf-size -B "main.elf"
 	@echo 'Finished building: $@'
 	@echo ' '
 
-cs_pg_example.dat: cs_pg_example.elf makefile $(OPTIONAL_TOOL_DEPS)
+main.dat: main.elf makefile $(OPTIONAL_TOOL_DEPS)
 	@echo 'Invoking: RISC-V ELF GNU objcopy'
-	riscv32-unknown-elf-objcopy -O binary "cs_pg_example.elf"  "cs_pg_example.dat"
+	riscv32-unknown-elf-objcopy -O binary "main.elf"  "main.dat"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) cs_pg_example.dat cs_pg_example.elf rv-size-display
+	-$(RM) main.dat main.elf rv-size-display
 	-@echo ' '
 
 secondary-outputs: $(BA_SIZE_DISPLAY) $(BA_OBJCOPY_OUTPUT)

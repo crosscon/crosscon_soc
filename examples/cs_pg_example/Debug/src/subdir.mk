@@ -1,26 +1,24 @@
-################################################################################
-# Automatically-generated file. Do not edit!
-################################################################################
-
-# Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../src/cs_pg_example.c \
+../src/main.c \
 ../src/start.c \
-../src/sys.c 
+../src/sys.c \
+../src/crosscon_soc.c
 
 S_UPPER_SRCS += \
 ../src/entry.S 
 
 C_DEPS += \
-./src/cs_pg_example.d \
+./src/main.d \
 ./src/start.d \
-./src/sys.d 
+./src/sys.d \
+./src/crosscon_soc.d
 
 OBJS += \
-./src/cs_pg_example.o \
+./src/main.o \
 ./src/entry.o \
 ./src/start.o \
-./src/sys.o 
+./src/sys.o \
+./src/crosscon_soc.o
 
 S_UPPER_DEPS += \
 ./src/entry.d 
@@ -45,7 +43,7 @@ src/%.o: ../src/%.S src/subdir.mk
 clean: clean-src
 
 clean-src:
-	-$(RM) ./src/cs_pg_example.d ./src/cs_pg_example.o ./src/entry.d ./src/entry.o ./src/start.d ./src/start.o ./src/sys.d ./src/sys.o
+	-$(RM) ./src/main.d ./src/main.o ./src/entry.d ./src/entry.o ./src/start.d ./src/start.o ./src/sys.d ./src/sys.o ./src/crosscon_soc.d ./src/crosscon_soc.o
 
 .PHONY: clean-src
 

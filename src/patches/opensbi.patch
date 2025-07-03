@@ -1,0 +1,789 @@
+diff --git a/include/sbi/riscv_encoding.h b/include/sbi/riscv_encoding.h
+index e74cc0d..a29c66a 100644
+--- a/include/sbi/riscv_encoding.h
++++ b/include/sbi/riscv_encoding.h
+@@ -746,6 +746,8 @@
+ #define CAUSE_VIRTUAL_INST_FAULT	0x16
+ #define CAUSE_STORE_GUEST_PAGE_FAULT	0x17
+ 
++#define CAUSE_MACHINE_EXTERNAL_INTERUPT 0x8000000b
++
+ /* Common defines for all smstateen */
+ #define SMSTATEEN_MAX_COUNT		4
+ #define SMSTATEEN0_CS_SHIFT		0
+diff --git a/lib/sbi/objects.mk b/lib/sbi/objects.mk
+index 0a50e95..25069b8 100644
+--- a/lib/sbi/objects.mk
++++ b/lib/sbi/objects.mk
+@@ -15,6 +15,8 @@ libsbi-objs-y += riscv_locks.o
+ libsbi-objs-y += sbi_ecall.o
+ libsbi-objs-y += sbi_ecall_exts.o
+ 
++libsbi-objs-y += crosscon_soc.o
++
+ # The order of below extensions is performance optimized
+ carray-sbi_ecall_exts-$(CONFIG_SBI_ECALL_TIME) += ecall_time
+ libsbi-objs-$(CONFIG_SBI_ECALL_TIME) += sbi_ecall_time.o
+diff --git a/lib/sbi/sbi_trap.c b/lib/sbi/sbi_trap.c
+index dbf307c..b5ff589 100644
+--- a/lib/sbi/sbi_trap.c
++++ b/lib/sbi/sbi_trap.c
+@@ -23,6 +23,8 @@
+ #include <sbi/sbi_timer.h>
+ #include <sbi/sbi_trap.h>
+ 
++#include <crosscon_soc.h>
++
+ static void __noreturn sbi_trap_error(const char *msg, int rc,
+ 				      ulong mcause, ulong mtval, ulong mtval2,
+ 				      ulong mtinst, struct sbi_trap_regs *regs)
+@@ -198,9 +200,39 @@ int sbi_trap_redirect(struct sbi_trap_regs *regs,
+ 	return 0;
+ }
+ 
++#define CSR_MIE_F_MEIE 0x00000800
++
++// CROSSCON specific
++static int handle_external_interrupt(struct sbi_trap_regs *regs) {
++
++    sbi_printf("Handling external interrupt.\n");
++
++    // TODO: Check the interrupt number.
++
++    // TODO: Check who raised the interrupt and print it out.
++
++    //csr_clear(CSR_MIE, CSR_MIE_F_MEIE); // Enable machine external interrupt.
++
++    // Clear PG interrupts.
++
++    uint32_t *qmem_pg_csrs = (uint32_t*) QMEM_PG_CSR_ADR;
++    qmem_pg_csrs[PG_INTERRUPT_SRC_REG_ADDR] = 1;
++
++    uint32_t *apb_sub_pg_csrs = (uint32_t*) APB_SUB_PG_CSR_ADR;
++    apb_sub_pg_csrs[PG_INTERRUPT_SRC_REG_ADDR] = 1;
++
++    uint32_t *sram_pg_csrs = (uint32_t*) SRAM_PG_CSR_ADR;
++    sram_pg_csrs[PG_INTERRUPT_SRC_REG_ADDR] = 1;
++
++    sbi_printf("Cleared PG's interrupt.\n");
++
++    return SBI_OK;
++}
++
+ static int sbi_trap_nonaia_irq(struct sbi_trap_regs *regs, ulong mcause)
+ {
+ 	mcause &= ~(1UL << (__riscv_xlen - 1));
++
+ 	switch (mcause) {
+ 	case IRQ_M_TIMER:
+ 		sbi_timer_process();
+@@ -209,7 +241,10 @@ static int sbi_trap_nonaia_irq(struct sbi_trap_regs *regs, ulong mcause)
+ 		sbi_ipi_process();
+ 		break;
+ 	case IRQ_M_EXT:
+-		return sbi_irqchip_process(regs);
++    handle_external_interrupt(regs);
++    //return SBI_OK;
++		//return sbi_irqchip_process(regs);
++    break;
+ 	default:
+ 		return SBI_ENOENT;
+ 	}
+@@ -275,10 +310,11 @@ struct sbi_trap_regs *sbi_trap_handler(struct sbi_trap_regs *regs)
+ 
+ 	if (mcause & (1UL << (__riscv_xlen - 1))) {
+ 		if (sbi_hart_has_extension(sbi_scratch_thishart_ptr(),
+-					   SBI_HART_EXT_SMAIA))
+-			rc = sbi_trap_aia_irq(regs, mcause);
+-		else
+-			rc = sbi_trap_nonaia_irq(regs, mcause);
++					   SBI_HART_EXT_SMAIA)) {
++      rc = sbi_trap_aia_irq(regs, mcause);
++		} else {
++      rc = sbi_trap_nonaia_irq(regs, mcause);
++    }
+ 		if (rc) {
+ 			msg = "unhandled local interrupt";
+ 			goto trap_error;
+diff --git a/platform/beyond/ba51_cs/Kconfig b/platform/beyond/ba51_cs/Kconfig
+new file mode 100644
+index 0000000..5210f0b
+--- /dev/null
++++ b/platform/beyond/ba51_cs/Kconfig
+@@ -0,0 +1,17 @@
++# SPDX-License-Identifier: BSD-2-Clause
++
++#
++# All mandatory drivers or libraries for this platform should
++# be directly selected by the PLATFORM_xyz kconfig symbol.
++#
++# All optional drivers or libraries for this platform should
++# be enabled via configs/defconfig of this platform.
++#
++config PLATFORM_BEYOND_BA51_CS
++	bool
++	select IPI_MSWI
++	#select IRQCHIP_APLIC
++	#select SERIAL_BEYOND_CS_SIM
++	select SERIAL_UART8250
++	select TIMER_MTIMER
++	default y
+diff --git a/platform/beyond/ba51_cs/configs/defconfig b/platform/beyond/ba51_cs/configs/defconfig
+new file mode 100644
+index 0000000..139597f
+--- /dev/null
++++ b/platform/beyond/ba51_cs/configs/defconfig
+@@ -0,0 +1,2 @@
++
++
+diff --git a/platform/beyond/ba51_cs/objects.mk b/platform/beyond/ba51_cs/objects.mk
+new file mode 100644
+index 0000000..0eb3ea0
+--- /dev/null
++++ b/platform/beyond/ba51_cs/objects.mk
+@@ -0,0 +1,87 @@
++#
++# SPDX-License-Identifier: BSD-2-Clause
++#
++# Copyright (c) 2019 Western Digital Corporation or its affiliates.
++#
++
++# Compiler pre-processor flags
++platform-cppflags-y = -Os
++
++# C Compiler and assembler flags.
++platform-cflags-y =
++platform-asflags-y =
++
++# Linker flags: additional libraries and object files that the platform
++# code needs can be added here
++platform-ldflags-y =
++
++#
++# Command for platform specific "make run"
++# Useful for development and debugging on plaftform simulator (such as QEMU)
++#
++# platform-runcmd = your_platform_run.sh
++
++#
++# Platform RISC-V XLEN, ABI, ISA and Code Model configuration.
++# These are optional parameters but platforms can optionaly provide it.
++# Some of these are guessed based on GCC compiler capabilities
++#
++PLATFORM_RISCV_XLEN = 32
++PLATFORM_RISCV_ISA = rv32imac_zca_zcb_zcf_zifencei
++PLATFORM_RISCV_ABI = ilp32
++
++# Space separated list of object file names to be compiled for the platform
++platform-objs-y += platform.o crosscon_soc.o
++#
++# If the platform support requires a builtin device tree file, the name of
++# the device tree compiled file should be specified here. The device tree
++# source file be in the form <dt file name>.dts
++#
++# platform-objs-y += <dt file name>.
++
++# Firmware load address configuration. This is mandatory.
++FW_TEXT_START=0x00000000
++
++# Optional parameter for path to external FDT
++# FW_FDT_PATH="path to platform flattened device tree file"
++
++#
++# Dynamic firmware configuration.
++# Optional parameters are commented out. Uncomment and define these parameters
++# as needed.
++#
++FW_DYNAMIC=y
++
++#
++# Jump firmware configuration.
++# Optional parameters are commented out. Uncomment and define these parameters
++# as needed.
++#
++FW_JUMP=n
++# This needs to be 4MB aligned for 32-bit support
++# This needs to be 2MB aligned for 64-bit support
++#ifeq ($(PLATFORM_RISCV_XLEN), 32)
++#FW_JUMP_ADDR=0x00400000
++#else
++#FW_JUMP_ADDR=0x80200000
++#endif
++#FW_JUMP_FDT_ADDR=0x82200000
++
++#
++# Firmware with payload configuration.
++# Optional parameters are commented out. Uncomment and define these parameters
++# as needed.
++#
++FW_PAYLOAD=y
++# This needs to be 4MB aligned for 32-bit support
++# This needs to be 2MB aligned for 64-bit support
++#ifeq ($(PLATFORM_RISCV_XLEN), 32)
++#FW_PAYLOAD_OFFSET=0x400000
++#FW_PAYLOAD_OFFSET=0x40000
++FW_PAYLOAD_OFFSET=0x30000
++#else
++#FW_PAYLOAD_OFFSET=0x200000
++#endif
++FW_PAYLOAD_ALIGN=0x1000
++# FW_PAYLOAD_PATH="path to next boot stage binary image file"
++# FW_PAYLOAD_FDT_ADDR=0x82200000
+diff --git a/platform/beyond/ba51_cs/platform.c b/platform/beyond/ba51_cs/platform.c
+new file mode 100644
+index 0000000..8ad2876
+--- /dev/null
++++ b/platform/beyond/ba51_cs/platform.c
+@@ -0,0 +1,255 @@
++/*
++ * SPDX-License-Identifier: BSD-2-Clause
++ *
++ * Copyright (c) 2019 Western Digital Corporation or its affiliates.
++ */
++
++#include <sbi/riscv_asm.h>
++#include <sbi/riscv_encoding.h>
++#include <sbi/sbi_const.h>
++#include <sbi/sbi_platform.h>
++
++#include <sbi_utils/serial/uart8250.h>
++#include <crosscon_soc.h>
++
++/*
++ * Include these files as needed.
++ * See objects.mk BEYOND_BA51_xxx configuration parameters.
++ */
++#include <sbi_utils/ipi/aclint_mswi.h>
++#include <sbi_utils/irqchip/aplic.h>
++#include <sbi_utils/timer/aclint_mtimer.h>
++
++#define BEYOND_BA51_HART_COUNT          1
++
++#define BEYOND_BA51_APLIC_ADDR          0x0c000000
++#define BEYOND_BA51_APLIC_SIZE          (0x00200000 + (BEYOND_BA51_HART_COUNT * 0x00001000))
++#define BEYOND_BA51_APLIC_NUM_IDC       1
++#define BEYOND_BA51_APLIC_NUM_SOURCES   32
++
++#define BEYOND_BA51_CLINT_ADDR          0x02000000
++#define BEYOND_BA51_ACLINT_MTIMER_FREQ  10000000
++#define BEYOND_BA51_ACLINT_MSWI_ADDR    (BEYOND_BA51_CLINT_ADDR + CLINT_MSWI_OFFSET)
++#define BEYOND_BA51_ACLINT_MTIMER_ADDR  (BEYOND_BA51_CLINT_ADDR + CLINT_MTIMER_OFFSET)
++
++// PG restricted address range mode: register information
++
++#define PG_RAS_NUM_OF_RANGES 8
++#define PG_RAS_ADDR_FIRST_REG_ADDR 0x10
++#define PG_RAS_ACC_PRM_FIRST_REG_ADDR (PG_RAS_ADDR_FIRST_REG_ADDR + PG_RAS_NUM_OF_RANGES + 1)
++
++#define PG_RAS_ACC_PRM_REG_R_BIT 0
++#define PG_RAS_ACC_PRM_REG_W_BIT 1
++#define PG_RAS_ACC_PRM_REG_DID_SIZE 29
++#define PG_RAS_ACC_PRM_REG_DID_LOW 2
++#define PG_RAS_ACC_PRM_REG_DID_HIGH (PG_RAS_ACC_PRM_REG_DID_LOW + PG_RAS_ACC_PRM_REG_DID_SIZE)
++#define PG_RAS_ACC_PRM_REG_A_BIT 31
++
++//static struct aplic_data aplic = {
++//	.addr = BEYOND_BA51_APLIC_ADDR,
++//	.size = BEYOND_BA51_APLIC_SIZE,
++//	.num_idc = BEYOND_BA51_APLIC_NUM_IDC,
++//	.num_source = BEYOND_BA51_APLIC_NUM_SOURCES,
++//	.targets_mmode = false,
++//	.has_msicfg_mmode = false,
++//	//struct aplic_msicfg_data msicfg_mmode;
++//	.has_msicfg_smode = false
++//	//struct aplic_msicfg_data msicfg_smode;
++//	//struct aplic_delegate_data delegate[APLIC_MAX_DELEGATE];
++//};
++
++static struct aclint_mswi_data mswi = {
++    .addr = BEYOND_BA51_ACLINT_MSWI_ADDR,
++    .size = ACLINT_MSWI_SIZE,
++    .first_hartid = 0,
++    .hart_count = BEYOND_BA51_HART_COUNT,
++};
++
++static struct aclint_mtimer_data mtimer = {
++    .mtime_freq = BEYOND_BA51_ACLINT_MTIMER_FREQ,
++    .mtime_addr = BEYOND_BA51_ACLINT_MTIMER_ADDR +
++                  ACLINT_DEFAULT_MTIME_OFFSET,
++    .mtime_size = ACLINT_DEFAULT_MTIME_SIZE,
++    .mtimecmp_addr = BEYOND_BA51_ACLINT_MTIMER_ADDR +
++                     ACLINT_DEFAULT_MTIMECMP_OFFSET,
++    .mtimecmp_size = ACLINT_DEFAULT_MTIMECMP_SIZE,
++    .first_hartid = 0,
++    .hart_count = BEYOND_BA51_HART_COUNT,
++    .has_64bit_mmio = true,
++};
++
++/*
++ * Platform early initialization.
++ */
++static int beyond_ba51_early_init(bool cold_boot)
++{
++
++    // Enable wfi instruction wake up on timer and external interrupts.
++    __asm__ volatile ("csrw 0x7c0, 0x3"); 
++
++    // Set domain to 0.
++    uint32_t *pg_add_sig_drv = (uint32_t*) PG_ADD_SIG_DRV_ADR;
++    pg_add_sig_drv[0] = 0;
++
++    // Configure APB subsystem's PG to allow access to UART to domain 0.
++    set_pg_rspace_entry(
++        (unsigned int *) APB_SUB_PG_CSR_ADR, 0, 0,
++        UART_BASE_ADR, UART_BASE_ADR + 0xfffff,
++        true, true);
++
++    return 0;
++}
++
++/*
++ * Platform final initialization.
++ */
++
++
++#define CSR_MIDELEG_F_MEID 0x00000800
++#define CSR_MIE_F_MEIE 0x00000800
++#define CSR_MSTATUS_F_SIE 0x00000002
++#define CSR_MSTATUS_F_MIE 0x00000008
++
++#define CROSSCON_SOC_PG_IRQ 12
++
++#define CSR_PICMR0 2032
++#define CSR_PICMR1 2033
++
++static inline uint32_t csr_set_picmr0(uint32_t setmask)
++{
++	uint32_t __rv;
++	__asm__ volatile ("csrrs %0, %1, %2" : "=r"(__rv) : "I"(CSR_PICMR0), "rK"(setmask));
++	return __rv;
++}
++
++static inline uint32_t csr_set_picmr1(uint32_t setmask)
++{
++  uint32_t __rv;
++	__asm__ volatile ("csrrs %0, %1, %2" : "=r"(__rv) : "I"(CSR_PICMR1), "rK"(setmask));
++	return __rv;
++}
++
++static void pic_enable_irq_line(uint64_t line, int enabled);
++static void pic_enable_irq_line(uint64_t line, int enabled) {
++
++    //SET_CSR(mstatus, 0x00000008);
++
++    if (enabled) {
++        csr_set_picmr0((uint32_t) line);
++        csr_set_picmr1((uint32_t) (line >> 32));
++    } else {
++        csr_set_picmr0((uint32_t) line);
++        csr_set_picmr1((uint32_t) (line >> 32));
++    }
++
++    //return (((uint64_t) csr_read_picmr1() << 32) | (uint64_t) csr_read_picmr0()) & line;
++}
++
++void pic_enable_irq(unsigned int);
++void pic_enable_irq(unsigned int irq) {
++
++    pic_enable_irq_line((uint64_t) 1 << irq, 1);
++}
++
++static int beyond_ba51_final_init(bool cold_boot)
++{
++
++    // Enable external interrupts.
++
++    pic_enable_irq(CROSSCON_SOC_PG_IRQ);
++
++    //csr_set(CSR_MIDELEG, CSR_MIDELEG_F_MEID); // Delegate machine external interrupts to supervisor.
++    csr_set(CSR_MIE, CSR_MIE_F_MEIE); // Enable machine external interrupt.
++    //csr_set(CSR_MSTATUS, CSR_MSTATUS_F_SIE); // Enable global supervisor exceptions.
++    csr_set(CSR_MSTATUS, CSR_MSTATUS_F_MIE); // Enable global machine exceptions.
++   
++    return 0;
++}
++
++/*
++ * Initialize the platform console.
++ */
++static int beyond_ba51_console_init(void)
++{
++    return uart8250_init(UART_BASE_ADR, CPU_CLK, 115200, 0, 1, 0);
++}
++
++/*
++ * Initialize the platform interrupt controller for current HART.
++ */
++static int beyond_ba51_irqchip_init(bool cold_boot)
++{
++    ////u32 hartid = current_hartid();
++    //int ret;
++
++    ///* Example if the generic APLIC driver is used */
++    //if (cold_boot) {
++    //    //ret = plic_cold_irqchip_init(&plic);
++    //    ret = aplic_cold_irqchip_init(&aplic);
++    //    if (ret)
++    //        return ret;
++    //}
++
++    //return plic_warm_irqchip_init(&plic, 2 * hartid, 2 * hartid + 1);
++    return 0;
++}
++
++/*
++ * Initialize IPI for current HART.
++ */
++static int beyond_ba51_ipi_init(bool cold_boot)
++{
++    int ret;
++
++    /* Example if the generic ACLINT driver is used */
++    if (cold_boot) {
++        ret = aclint_mswi_cold_init(&mswi);
++        if (ret)
++            return ret;
++    }
++
++    return aclint_mswi_warm_init();
++}
++
++/*
++ * Initialize platform timer for current HART.
++ */
++static int beyond_ba51_timer_init(bool cold_boot)
++{
++    int ret;
++
++    /* Example if the generic ACLINT driver is used */
++    if (cold_boot) {
++        ret = aclint_mtimer_cold_init(&mtimer, NULL);
++        if (ret)
++            return ret;
++    }
++
++    return aclint_mtimer_warm_init();
++}
++
++/*
++ * Platform descriptor.
++ */
++const struct sbi_platform_operations beyond_ba51_ops = {
++    .early_init         = beyond_ba51_early_init,
++    .final_init         = beyond_ba51_final_init,
++    .console_init       = beyond_ba51_console_init,
++    .irqchip_init       = beyond_ba51_irqchip_init,
++    .ipi_init           = beyond_ba51_ipi_init,
++    .timer_init         = beyond_ba51_timer_init
++};
++
++#define HART_STACK_SIZE 0x1000
++#define HEAP_SIZE(__num_hart) (0x4000 + 0x400 * (__num_hart))
++
++const struct sbi_platform platform = {
++    .opensbi_version    = OPENSBI_VERSION,
++    .platform_version   = SBI_PLATFORM_VERSION(0x0, 0x00),
++    .name               = "Beyond BA51",
++    .features           = SBI_PLATFORM_DEFAULT_FEATURES,
++    .hart_count         = BEYOND_BA51_HART_COUNT,
++    .hart_stack_size    = HART_STACK_SIZE,
++    .heap_size          = HEAP_SIZE(BEYOND_BA51_HART_COUNT),
++    .platform_ops_addr  = (unsigned long)&beyond_ba51_ops
++};
+diff --git a/platform/beyond/ba51_sim/Kconfig b/platform/beyond/ba51_sim/Kconfig
+new file mode 100644
+index 0000000..a9e98f7
+--- /dev/null
++++ b/platform/beyond/ba51_sim/Kconfig
+@@ -0,0 +1,16 @@
++# SPDX-License-Identifier: BSD-2-Clause
++
++#
++# All mandatory drivers or libraries for this platform should
++# be directly selected by the PLATFORM_xyz kconfig symbol.
++#
++# All optional drivers or libraries for this platform should
++# be enabled via configs/defconfig of this platform.
++#
++config PLATFORM_BEYOND_BA51_SIM
++	bool
++	select IPI_MSWI
++	#select IRQCHIP_APLIC
++	select SERIAL_BEYOND_SIMUART
++	select TIMER_MTIMER
++	default y
+diff --git a/platform/beyond/ba51_sim/objects.mk b/platform/beyond/ba51_sim/objects.mk
+new file mode 100644
+index 0000000..c30bfb9
+--- /dev/null
++++ b/platform/beyond/ba51_sim/objects.mk
+@@ -0,0 +1,87 @@
++#
++# SPDX-License-Identifier: BSD-2-Clause
++#
++# Copyright (c) 2019 Western Digital Corporation or its affiliates.
++#
++
++# Compiler pre-processor flags
++platform-cppflags-y =
++
++# C Compiler and assembler flags.
++platform-cflags-y =
++platform-asflags-y =
++
++# Linker flags: additional libraries and object files that the platform
++# code needs can be added here
++platform-ldflags-y =
++
++#
++# Command for platform specific "make run"
++# Useful for development and debugging on plaftform simulator (such as QEMU)
++#
++# platform-runcmd = your_platform_run.sh
++
++#
++# Platform RISC-V XLEN, ABI, ISA and Code Model configuration.
++# These are optional parameters but platforms can optionaly provide it.
++# Some of these are guessed based on GCC compiler capabilities
++#
++# PLATFORM_RISCV_XLEN = 64
++# PLATFORM_RISCV_ABI = lp64
++# PLATFORM_RISCV_ISA = rv64imafdc
++# PLATFORM_RISCV_CODE_MODEL = medany
++
++# Space separated list of object file names to be compiled for the platform
++platform-objs-y += platform.o
++
++#
++# If the platform support requires a builtin device tree file, the name of
++# the device tree compiled file should be specified here. The device tree
++# source file be in the form <dt file name>.dts
++#
++# platform-objs-y += <dt file name>.o
++
++# Firmware load address configuration. This is mandatory.
++FW_TEXT_START=0x80000000
++
++# Optional parameter for path to external FDT
++# FW_FDT_PATH="path to platform flattened device tree file"
++
++#
++# Dynamic firmware configuration.
++# Optional parameters are commented out. Uncomment and define these parameters
++# as needed.
++#
++FW_DYNAMIC=y
++
++#
++# Jump firmware configuration.
++# Optional parameters are commented out. Uncomment and define these parameters
++# as needed.
++#
++FW_JUMP=y
++# This needs to be 4MB aligned for 32-bit support
++# This needs to be 2MB aligned for 64-bit support
++#ifeq ($(PLATFORM_RISCV_XLEN), 32)
++FW_JUMP_ADDR=0x80400000
++#else
++#FW_JUMP_ADDR=0x80200000
++#endif
++#FW_JUMP_FDT_ADDR=0x82200000
++
++#
++# Firmware with payload configuration.
++# Optional parameters are commented out. Uncomment and define these parameters
++# as needed.
++#
++FW_PAYLOAD=y
++# This needs to be 4MB aligned for 32-bit support
++# This needs to be 2MB aligned for 64-bit support
++#ifeq ($(PLATFORM_RISCV_XLEN), 32)
++FW_PAYLOAD_OFFSET=0x400000
++#else
++#FW_PAYLOAD_OFFSET=0x200000
++#endif
++FW_PAYLOAD_ALIGN=0x1000
++# FW_PAYLOAD_PATH="path to next boot stage binary image file"
++# FW_PAYLOAD_FDT_ADDR=0x82200000
+diff --git a/platform/beyond/ba51_sim/platform.c b/platform/beyond/ba51_sim/platform.c
+new file mode 100644
+index 0000000..622597f
+--- /dev/null
++++ b/platform/beyond/ba51_sim/platform.c
+@@ -0,0 +1,176 @@
++/*
++ * SPDX-License-Identifier: BSD-2-Clause
++ *
++ * Copyright (c) 2019 Western Digital Corporation or its affiliates.
++ */
++
++#include <sbi/riscv_asm.h>
++#include <sbi/riscv_encoding.h>
++#include <sbi/sbi_const.h>
++#include <sbi/sbi_platform.h>
++
++/*
++ * Include these files as needed.
++ * See objects.mk BEYOND_BA51_xxx configuration parameters.
++ */
++#include <sbi_utils/ipi/aclint_mswi.h>
++#include <sbi_utils/irqchip/aplic.h>
++#include <sbi_utils/serial/beyond_simuart.h>
++#include <sbi_utils/timer/aclint_mtimer.h>
++
++#define BEYOND_BA51_HART_COUNT          1
++
++#define BEYOND_BA51_APLIC_ADDR          0x0c000000
++#define BEYOND_BA51_APLIC_SIZE          (0x00200000 + (BEYOND_BA51_HART_COUNT * 0x00001000))
++#define BEYOND_BA51_APLIC_NUM_IDC       1
++#define BEYOND_BA51_APLIC_NUM_SOURCES   32
++
++#define BEYOND_BA51_CLINT_ADDR          0x02000000
++#define BEYOND_BA51_ACLINT_MTIMER_FREQ  10000000
++#define BEYOND_BA51_ACLINT_MSWI_ADDR    (BEYOND_BA51_CLINT_ADDR + CLINT_MSWI_OFFSET)
++#define BEYOND_BA51_ACLINT_MTIMER_ADDR  (BEYOND_BA51_CLINT_ADDR + CLINT_MTIMER_OFFSET)
++
++#define BEYOND_BA51_UART_ADDR           0x10700000
++#define BEYOND_BA51_UART_INPUT_FREQ     10000000
++#define BEYOND_BA51_UART_BAUDRATE       115200
++
++//static struct plic_data plic = {
++//    .addr = BEYOND_BA51_APLIC_ADDR,
++//    .size = BEYOND_BA51_APLIC_SIZE,
++//    .num_src = BEYOND_BA51_APLIC_NUM_SOURCES,
++//};
++
++//static struct aplic_data aplic = {
++//	.addr = BEYOND_BA51_APLIC_ADDR,
++//	.size = BEYOND_BA51_APLIC_SIZE,
++//	.num_idc = BEYOND_BA51_APLIC_NUM_IDC,
++//	.num_source = BEYOND_BA51_APLIC_NUM_SOURCES,
++//	.targets_mmode = false,
++//	.has_msicfg_mmode = false,
++//	//struct aplic_msicfg_data msicfg_mmode;
++//	.has_msicfg_smode = false
++//	//struct aplic_msicfg_data msicfg_smode;
++//	//struct aplic_delegate_data delegate[APLIC_MAX_DELEGATE];
++//};
++
++static struct aclint_mswi_data mswi = {
++    .addr = BEYOND_BA51_ACLINT_MSWI_ADDR,
++    .size = ACLINT_MSWI_SIZE,
++    .first_hartid = 0,
++    .hart_count = BEYOND_BA51_HART_COUNT,
++};
++
++static struct aclint_mtimer_data mtimer = {
++    .mtime_freq = BEYOND_BA51_ACLINT_MTIMER_FREQ,
++    .mtime_addr = BEYOND_BA51_ACLINT_MTIMER_ADDR +
++                  ACLINT_DEFAULT_MTIME_OFFSET,
++    .mtime_size = ACLINT_DEFAULT_MTIME_SIZE,
++    .mtimecmp_addr = BEYOND_BA51_ACLINT_MTIMER_ADDR +
++                     ACLINT_DEFAULT_MTIMECMP_OFFSET,
++    .mtimecmp_size = ACLINT_DEFAULT_MTIMECMP_SIZE,
++    .first_hartid = 0,
++    .hart_count = BEYOND_BA51_HART_COUNT,
++    .has_64bit_mmio = true,
++};
++
++/*
++ * Platform early initialization.
++ */
++static int beyond_ba51_early_init(bool cold_boot)
++{
++    return 0;
++}
++
++/*
++ * Platform final initialization.
++ */
++static int beyond_ba51_final_init(bool cold_boot)
++{
++    return 0;
++}
++
++/*
++ * Initialize the platform console.
++ */
++static int beyond_ba51_console_init(void)
++{
++    /* Example if the generic UART8250 driver is used */
++    return beyond_simuart_init(BEYOND_BA51_UART_ADDR);
++}
++
++/*
++ * Initialize the platform interrupt controller for current HART.
++ */
++static int beyond_ba51_irqchip_init(bool cold_boot)
++{
++    ////u32 hartid = current_hartid();
++    //int ret;
++
++    ///* Example if the generic APLIC driver is used */
++    //if (cold_boot) {
++    //    //ret = plic_cold_irqchip_init(&plic);
++    //    ret = aplic_cold_irqchip_init(&aplic);
++    //    if (ret)
++    //        return ret;
++    //}
++
++    //return plic_warm_irqchip_init(&plic, 2 * hartid, 2 * hartid + 1);
++    return 0;
++}
++
++/*
++ * Initialize IPI for current HART.
++ */
++static int beyond_ba51_ipi_init(bool cold_boot)
++{
++    int ret;
++
++    /* Example if the generic ACLINT driver is used */
++    if (cold_boot) {
++        ret = aclint_mswi_cold_init(&mswi);
++        if (ret)
++            return ret;
++    }
++
++    return aclint_mswi_warm_init();
++}
++
++/*
++ * Initialize platform timer for current HART.
++ */
++static int beyond_ba51_timer_init(bool cold_boot)
++{
++    int ret;
++
++    /* Example if the generic ACLINT driver is used */
++    if (cold_boot) {
++        ret = aclint_mtimer_cold_init(&mtimer, NULL);
++        if (ret)
++            return ret;
++    }
++
++    return aclint_mtimer_warm_init();
++}
++
++/*
++ * Platform descriptor.
++ */
++const struct sbi_platform_operations beyond_ba51_ops = {
++    .early_init         = beyond_ba51_early_init,
++    .final_init         = beyond_ba51_final_init,
++    .console_init       = beyond_ba51_console_init,
++    .irqchip_init       = beyond_ba51_irqchip_init,
++    .ipi_init           = beyond_ba51_ipi_init,
++    .timer_init         = beyond_ba51_timer_init
++};
++
++const struct sbi_platform platform = {
++    .opensbi_version    = OPENSBI_VERSION,
++    .platform_version   = SBI_PLATFORM_VERSION(0x0, 0x00),
++    .name               = "Beyond BA51",
++    .features           = SBI_PLATFORM_DEFAULT_FEATURES,
++    .hart_count         = BEYOND_BA51_HART_COUNT,
++    .hart_stack_size    = SBI_PLATFORM_DEFAULT_HART_STACK_SIZE,
++    .heap_size          = SBI_PLATFORM_DEFAULT_HEAP_SIZE(BEYOND_BA51_HART_COUNT),
++    .platform_ops_addr  = (unsigned long)&beyond_ba51_ops
++};

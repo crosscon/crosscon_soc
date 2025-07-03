@@ -27,18 +27,13 @@
  */
 
 /**
- * ===========================================================================
- * Perimeter guard example
- *
- * Program tries to access SRAM protected by the PG with different DID.
- *
- * This sample is compatible with crosscon_soc_with_pg_a7.
- * ===========================================================================
+ * AES-GCM example: An example of how to use AES-GCM accelerator.
  */
 
 #include "sys.h"
 #include "csr_defs.h"
 #include "uart.h"
+#include "crosscon_soc.h"
 
 #include <stdio.h>
 #include <inttypes.h>
@@ -47,90 +42,12 @@
 #include <errno.h>
 #include <string.h>
 
-#define PG_ADD_SIG_DRV_ADR 0x23100000
-#define QMEM_PG_CSR_ADR 0x23200000
-#define APB_SUB_PG_CSR_ADR 0x23300000
-#define AES_MM_CFG_BASE_ADR 0x24000000
-
-// State register
-#define AES_GCM_STATE_REG 0
-// Encryption / decryption registers
-#define AES_GCM_ENCRYPT_REG 1
-// Key length register
-#define AES_GCM_KEYL_REG 2
-// Key register
-#define AES_GCM_KEY_REG 3
-// Initialization vector register
-#define AES_GCM_IV_REG 11
-// Address length
-#define AES_GCM_A_LEN_REG 14
-// Data length
-#define AES_GCM_D_LEN_REG 15
-// Address where the input data is located
-#define AES_GCM_IN_D_ADDR_REG 16
-// Address where the output data is located
-#define AES_GCM_OUT_D_ADDR_REG 17
-
-// State register fields
-// Needs to be set to HIGH when the master has provided the initialization parameters.
-#define AES_GCM_STATE_INIT_FLAG 0
-// HIGH when input data is ready. Can only be written to.
-#define AES_GCM_STATE_IN_D_RDY_FLAG 1
-// HIGH when output data is ready. Can only be read.
-#define AES_GCM_STATE_OUT_D_RDY_FLAG 2
-// HIGH when tag is ready.
-#define AES_GCM_STATE_TAG_RDY_FLAG 3
-
-// Restricted address space mode configuration registers - Needs to be
-// adjusted to the actual number of ranges supported by a specific instance of
-// PG.
-#define PG_RAS_NUM_OF_RANGES 8
-// The address of the first range address register
-#define PG_RAS_ADDR_FIRST_REG_ADDR 0x10
-// The address of the first range access permission registers
-#define PG_RAS_ACC_PRM_FIRST_REG_ADDR (PG_RAS_ADDR_FIRST_REG_ADDR + PG_RAS_NUM_OF_RANGES + 1)
-                                                                                
-// The range address permission field indices
- // Read permission index
-#define PG_RAS_ACC_PRM_REG_R_BIT 0
- // Write permission index
-#define PG_RAS_ACC_PRM_REG_W_BIT 1
-// Start and end of the DID field
-#define PG_RAS_ACC_PRM_REG_DID_SIZE 29
-#define PG_RAS_ACC_PRM_REG_DID_LOW 2
-#define PG_RAS_ACC_PRM_REG_DID_HIGH (PG_RAS_ACC_PRM_REG_DID_LOW + PG_RAS_ACC_PRM_REG_DID_SIZE)
- // Range active index - HIGH when the range has a valid address and permissions.
-#define PG_RAS_ACC_PRM_REG_A_BIT 31
 
 void handle_external_interrupt() { 
 
     printf("Handling external interrupt.");
 
 }
-
-void set_pg_rspace_entry(
-    uint32_t* pg_csrs_base,
-    uint8_t entry,
-    uint8_t did,
-    uint32_t from_addr,
-    uint32_t to_addr,
-    bool allow_read,
-    bool allow_write)
-{
-    pg_csrs_base[PG_RAS_ADDR_FIRST_REG_ADDR + entry] = from_addr;
-    pg_csrs_base[PG_RAS_ADDR_FIRST_REG_ADDR + entry + 1] = to_addr;
-    pg_csrs_base[PG_RAS_ACC_PRM_FIRST_REG_ADDR + entry] = (uint32_t) (
-        (1 << PG_RAS_ACC_PRM_REG_A_BIT) |
-        (did << PG_RAS_ACC_PRM_REG_DID_LOW) |
-        (allow_read << PG_RAS_ACC_PRM_REG_R_BIT) |
-        (allow_write << PG_RAS_ACC_PRM_REG_W_BIT));
-}
-
-void clear_pg_rspace_entry(uint32_t* pg_csrs_base, uint8_t entry) {
-    pg_csrs_base[PG_RAS_ACC_PRM_FIRST_REG_ADDR + entry] = (uint32_t) (0 << PG_RAS_ACC_PRM_REG_A_BIT);
-}
-
-#define AES_GCM_DECRYPT_INVALID_D_LEN -1
 
 void aes_gcm_cipher(
     // Input parameters
@@ -149,16 +66,16 @@ void aes_gcm_cipher(
     uint8_t data_in_block_buf[16];
     uint8_t data_out_block_buf[16 + 16 + 1]; // Space for output block and tag.
 
-    uint32_t *qmem_pg_csrs = (uint32_t*) QMEM_PG_CSR_ADR;
     set_pg_rspace_entry(
-        qmem_pg_csrs, 0, 0,
-        (uint32_t) data_in_block_buf, (uint32_t) (data_in_block_buf + 16 + 1),
+        (unsigned int *) QMEM_PG_CSR_ADR, 0, 0,
+        (unsigned int) data_in_block_buf, (unsigned int) (data_in_block_buf + 16 + 1),
         true, true);
-    set_pg_rspace_entry(qmem_pg_csrs, 2, 0,
-        (uint32_t) data_out_block_buf, (uint32_t) (data_out_block_buf + 16 + 16 + 1 + 1),
+    set_pg_rspace_entry(
+        (unsigned int *) QMEM_PG_CSR_ADR, 2, 0,
+        (unsigned int) data_out_block_buf, (unsigned int) (data_out_block_buf + 16 + 16 + 1 + 1),
         true, true);
 
-    uint32_t *aes_mm_status_reg = (uint32_t*) AES_MM_CFG_BASE_ADR;
+    uint32_t *aes_mm_status_reg = (uint32_t*) AES_GCM_CFG_BASE_ADR;
 
     //
     // Pass initial parameters.
@@ -264,19 +181,20 @@ void aes_gcm_cipher(
 
     memcpy(tag, ((uint8_t*) data_out_block_buf + 16), 16);
 
-    clear_pg_rspace_entry(qmem_pg_csrs, 0);
-    clear_pg_rspace_entry(qmem_pg_csrs, 2);
+    clear_pg_rspace_entry((unsigned int *) QMEM_PG_CSR_ADR, 0);
+    clear_pg_rspace_entry((unsigned int *) QMEM_PG_CSR_ADR, 2);
 }
 
 int main(void) {
 
     // Set domain to 0.
-    uint33_t *pg_add_sig_drv = (uint32_t*) PG_ADD_SIG_DRV_ADR;
+    uint32_t *pg_add_sig_drv = (uint32_t*) PG_ADD_SIG_DRV_ADR;
     pg_add_sig_drv[0] = 0;
 
     // Configure APB subsystem's PG to allow access to UART to domain 0.
-    uint32_t *apb_sub_pg_csrs = (uint32_t*) APB_SUB_PG_CSR_ADR;
-    set_pg_rspace_entry(apb_sub_pg_csrs, 0, 0, UART_RBR, UART_RBR + 0xfffff, true, true);
+    set_pg_rspace_entry(
+        (unsigned int *) APB_SUB_PG_CSR_ADR, 0, 0,
+        UART_RBR, UART_RBR + 0xfffff, true, true);
 
     uint8_t ds1_key[] = {0xda, 0xaa, 0xd6, 0xe5, 0x60, 0x4e, 0x8e, 0x17, 0xbd, 0x9f, 0x10, 0x8d, 0x91, 0xe2, 0x6a, 0xfe, 0x62, 0x81, 0xda, 0xc8, 0xfd, 0xa0, 0x9, 0x10, 0x40, 0xa7, 0xa6, 0xd7, 0xbd, 0x9b, 0x43, 0xb5};
     uint8_t ds1_iv[] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};

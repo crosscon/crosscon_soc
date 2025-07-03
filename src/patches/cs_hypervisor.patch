@@ -1,0 +1,95 @@
+diff --git a/src/arch/riscv/cpu.c b/src/arch/riscv/cpu.c
+index 4bdfb11..0203eef 100644
+--- a/src/arch/riscv/cpu.c
++++ b/src/arch/riscv/cpu.c
+@@ -8,6 +8,8 @@
+ #include <arch/sbi.h>
+ #include <platform.h>
+ 
++#include <crosscon_soc.h>
++
+ cpuid_t CPU_MASTER __attribute__((section(".data")));
+ 
+ /* Perform architecture dependent cpu cores initializations */
+@@ -30,6 +32,18 @@ void cpu_arch_init(cpuid_t cpuid, paddr_t load_addr)
+     spmp_init(&cpu()->arch.spmp_hyp, PRIV_HYP);
+     spmp_set_active(&cpu()->arch.spmp_hyp, true);
+ #endif
++
++    // CROSSCON SoC specific
++    // TODO: This is specific for the platform. Find a better place for this.
++
++    // Allow both VM1 (domain 0) and VM2 (domain 1) to access UART.
++    set_pg_rspace_entry((unsigned int *) APB_SUB_PG_CSR_ADR, 0, 0, UART_BASE_ADR, UART_BASE_ADR + 0xfffff, true, true);
++    set_pg_rspace_entry((unsigned int *) APB_SUB_PG_CSR_ADR, 2, 1, UART_BASE_ADR, UART_BASE_ADR + 0xfffff, true, true);
++
++    // TODO: Needs to be dynamically set.
++    // PG's QMEM PG so that AES-GCM can access VM1's and VM2's memory over AHB bus.
++    set_pg_rspace_entry((unsigned int *) QMEM_PG_CSR_ADR, 0, 0, 0x60000, 0x70000, true, true);
++    set_pg_rspace_entry((unsigned int *) QMEM_PG_CSR_ADR, 2, 1, 0x70000, 0x80000, true, true);
+ }
+ 
+ void cpu_arch_standby(void)
+diff --git a/src/arch/riscv/objects.mk b/src/arch/riscv/objects.mk
+index 4684074..b639765 100644
+--- a/src/arch/riscv/objects.mk
++++ b/src/arch/riscv/objects.mk
+@@ -13,3 +13,4 @@ cpu-objs-y+=cache.o
+ cpu-objs-y+=aclint.o
+ cpu-objs-y+=vfp.o
+ cpu-objs-y+=timer.o
++cpu-objs-y+=crosscon_soc.o
+diff --git a/src/arch/riscv/spmp/boot.S b/src/arch/riscv/spmp/boot.S
+index 5fe72f1..f65f4b7 100644
+--- a/src/arch/riscv/spmp/boot.S
++++ b/src/arch/riscv/spmp/boot.S
+@@ -15,8 +15,8 @@ boot_arch:
+     /* Set sscratch to point to cpu struct and clear it*/
+     la  t0, _image_end
+     li  t1, CPU_SIZE
+-    mul t1, t1, a0
+-    add a3, t0, t1
++    mul t2, t1, a0
++    add a3, t0, t2
+     csrw sscratch, a3
+     add a4, a3, t1
+ 	call boot_clear
+diff --git a/src/arch/riscv/vm.c b/src/arch/riscv/vm.c
+index 7dbc935..8cb4a28 100644
+--- a/src/arch/riscv/vm.c
++++ b/src/arch/riscv/vm.c
+@@ -11,6 +11,8 @@
+ #include <string.h>
+ #include <config.h>
+ 
++#include <crosscon_soc.h>
++
+ void vm_arch_init(struct vm* vm, const struct vm_config* vm_config)
+ {
+ #ifdef MEM_PROT_MMU
+@@ -133,6 +135,13 @@ void vcpu_restore_state(struct vcpu* vcpu)
+     spmp_set_active(&vcpu->arch.spmp, true);
+     spmp_restore(&vcpu->arch.spmp);
+ #endif
++
++    // CROSSCON SoC specific
++    // TODO: This is specific for the platform. Find a better place for this.
++
++    #define PG_ADD_SIG_DRV_ADR 0x23100000
++    uint32_t *pg_add_sig_drv = (uint32_t*) PG_ADD_SIG_DRV_ADR;
++    pg_add_sig_drv[0] = vcpu->vm->id;
+ }
+ 
+ void vcpu_save_state(struct vcpu* vcpu)
+diff --git a/src/platform/crosscon_soc/platform.mk b/src/platform/crosscon_soc/platform.mk
+index db18893..92d5699 100644
+--- a/src/platform/crosscon_soc/platform.mk
++++ b/src/platform/crosscon_soc/platform.mk
+@@ -17,6 +17,7 @@ platform_description:=crosscon-soc_desc.c
+ arch_mem_prot:=mpu
+ 
+ platform-cppflags =-DIPIC=$(IPIC)
++platform-cppflags +=-std=c11
+ platform-cflags =
+ platform-asflags =
+ platform-ldflags =
