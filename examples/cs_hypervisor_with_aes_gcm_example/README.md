@@ -138,7 +138,7 @@ Figure 1 shows the basic architecture of the CROSSCON SoC in the `crosscon_soc_a
 </p>
 <p align="center">Figure 1: CROSSCON SoC architecture of the bitstream 0.4.2</p>
 
-The example is configured to run two guest VM's, on top of the CROSSCON Hypervisor + SoC, that have access to AES-GCM accelerator protected by PG and UART. AES-GCM is memory mapped to the execution environment of both VMs and can be used by the VMs simultaneously as the PG handles the arbitration via context switching. The UART is shared between the domains without arbitration.
+The example is configured to run two guest VM's, on top of the CROSSCON Hypervisor + SoC, that have access to AES-GCM accelerator, protected by PG, and UART. AES-GCM is memory mapped to the execution environment of both VMs and can be used by the VMs simultaneously as the PG handles the arbitration via context switching. The UART is shared between the domains without arbitration.
 
 This version of the SoC supports only two domains because of the FPGA size limitations of the Arty-A7 board.
 
