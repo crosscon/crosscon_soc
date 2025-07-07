@@ -142,6 +142,38 @@ The example is configured to run two guest VM's, on top of the CROSSCON Hypervis
 
 This version of the SoC supports only two domains because of the FPGA size limitations of the Arty-A7 board.
 
+### Memory map
+
+Visible to all masters on the interconnect:
+| Address range | Module |
+|---------------|--------|
+| 0x00000000 - 0x0FFFFFFF | QMEM (512KB) |
+| 0x20000000 - 0x20FFFFFF | SRAM (512B) |
+| 0x10700000 - 0x107FFFFF | UART |
+| 0x21000000 - 0x21FFFFFF | SRAM's PG lock-release interface |
+| 0x24000000 - 0x24FFFFFF | AES-GCM accelerator |
+
+Visible only to BA51-H:
+| Address range | Module |
+|---------------|--------------|
+| 0x23100000 - 0x231FFFFF | BA51-H DID register - Drives HDID signal on the interconnect. |
+| 0x23200000 - 0x232FFFFF | QMEM's PG configuration interface |
+| 0x23300000 - 0x233FFFFF | APB subsystem's PG configuration interface |
+| 0x23400000 - 0x234FFFFF | SRAM's PG configuration interface |
+
+Note that the address ranges assigned to different modules are larger than the actual ranges used by the modules. The modules only use the lower bits when resolving which register is addressed. Thus multiple addresses in the address range can map to the same register.
+
+| Module | PG's operation mode |
+|---------------|--------------|
+| QMEM | Restricted address range mode with 8 address range entries |
+| SRAM |  Time‐sharing with reset and lock‐release arbitration mode |
+| APB subsystem | Restricted address range mode with 8 address range entries |
+| AES-GCM | Time-sharing with context switching |
+
+## Examples
+
+In order to see how individual modules are used in combination with PG, see the coresponding examples in the [examples](../) directory, e.g. a bare-metal example of how to use the AES-GCM accelerator can be found in [aes_gcm_acc_example](../aes_gcm_acc_example).
+
 ## The threat model
 
 The threat model is described in the deliverable D2.4 in Chapter 7.2.3 (The threat model). Summary: The attacker has control of the software in one of the VMs (APP1 or APP2) and tries to learn something about the other VM, e.g. either by finding the vulnerability in the isolation provided by BA51-H (sPMP, interrupts, etc.) or try to get some information through a shared hardware module, for example AES-GCM accelerator.
