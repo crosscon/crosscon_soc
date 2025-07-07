@@ -148,8 +148,8 @@ Visible to all masters on the interconnect:
 | Address range | Module |
 |---------------|--------|
 | 0x00000000 - 0x0FFFFFFF | QMEM (512KB) |
-| 0x20000000 - 0x20FFFFFF | SRAM (512B) |
 | 0x10700000 - 0x107FFFFF | UART |
+| 0x20000000 - 0x20FFFFFF | SRAM (512B) |
 | 0x21000000 - 0x21FFFFFF | SRAM's PG lock-release interface |
 | 0x24000000 - 0x24FFFFFF | AES-GCM accelerator |
 
