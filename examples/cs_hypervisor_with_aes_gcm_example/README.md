@@ -182,6 +182,7 @@ Following is an example of a message printed when a guest tries to access SRAM c
 ```
 OpenSBI: External interrupt: SRAM's PG access violation: domain = 1, address = 0x20000008
 ```
+This line was printed as part of the [cs_hypervisor_raise_intr_with_pg_lr_mod](../tests/cs_hypervisor_raise_intr_with_pg_lr_mod) example.
 
 An interrupt raised by a PG is routed by PIC, BA51's costume interrupt controller, to the BA51-H hart where it is received as external interrupt by OpenSBI in M-mode. The external interrupt is currently not propagated to a guest VM. Meaning that the read and write instructions performed by the guest VM are always completed successfully: if read instruction is performed, 0 value is returned instead of the actual value, where the write instruction has no effect.
 
