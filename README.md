@@ -26,7 +26,9 @@ You can try out the CROSSCON SoC by running it on the Arty-A7 100T board with on
 2. Build the example for the BA51-H core.
 3. Connect a debug key to the BA51-H, upload the binary of the example and run it.
 
-Here we'll cover how to get the basic Perimeter guard example running. Note that some of the examples might have more specific instructions.
+Here we'll cover how to get a basic Perimeter guard example running. If you want to see a more fully featured example, see the [cs_hypervisor_example](examples/cs_hypervisor_with_aes_gcm_example) that shows how to use CROSSCON SoC with the CROSSCON Hypervisor and provides further details, including how to use AES-GCM accelerators from a guest VM.
+
+Note that some of the examples might have more specific instructions.
 
 We assume that you are following the instructions on a PC with a working Ubuntu or Debian OS setup.
 

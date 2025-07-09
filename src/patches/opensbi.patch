@@ -25,7 +25,7 @@ index 0a50e95..25069b8 100644
  carray-sbi_ecall_exts-$(CONFIG_SBI_ECALL_TIME) += ecall_time
  libsbi-objs-$(CONFIG_SBI_ECALL_TIME) += sbi_ecall_time.o
 diff --git a/lib/sbi/sbi_trap.c b/lib/sbi/sbi_trap.c
-index dbf307c..b5ff589 100644
+index dbf307c..242691f 100644
 --- a/lib/sbi/sbi_trap.c
 +++ b/lib/sbi/sbi_trap.c
 @@ -23,6 +23,8 @@
@@ -37,7 +37,7 @@ index dbf307c..b5ff589 100644
  static void __noreturn sbi_trap_error(const char *msg, int rc,
  				      ulong mcause, ulong mtval, ulong mtval2,
  				      ulong mtinst, struct sbi_trap_regs *regs)
-@@ -198,9 +200,39 @@ int sbi_trap_redirect(struct sbi_trap_regs *regs,
+@@ -198,9 +200,58 @@ int sbi_trap_redirect(struct sbi_trap_regs *regs,
  	return 0;
  }
  
@@ -46,26 +46,45 @@ index dbf307c..b5ff589 100644
 +// CROSSCON specific
 +static int handle_external_interrupt(struct sbi_trap_regs *regs) {
 +
-+    sbi_printf("Handling external interrupt.\n");
-+
-+    // TODO: Check the interrupt number.
-+
-+    // TODO: Check who raised the interrupt and print it out.
-+
-+    //csr_clear(CSR_MIE, CSR_MIE_F_MEIE); // Enable machine external interrupt.
-+
-+    // Clear PG interrupts.
++    // Here we could check that the right interrupt was raised through PIC.
++    // Not needed right now as this will be replaced with APLIC related logic.
 +
 +    uint32_t *qmem_pg_csrs = (uint32_t*) QMEM_PG_CSR_ADR;
-+    qmem_pg_csrs[PG_INTERRUPT_SRC_REG_ADDR] = 1;
++    if (qmem_pg_csrs[PG_INTR_SRC_REG_ADDR] & 0x1) {
++
++        sbi_printf("OpenSBI: External interrupt: QMEM's PG access violation: "
++            "domain = %d, address = 0x%x\n",
++            qmem_pg_csrs[PG_INTR_CAUSE_DOMAIN_REG_ADDR],
++            qmem_pg_csrs[PG_INTR_CAUSE_ADDR_REG_ADDR]);
++
++        // Clear interrupt.
++        qmem_pg_csrs[PG_INTR_SRC_REG_ADDR] = 1;
++    }
 +
 +    uint32_t *apb_sub_pg_csrs = (uint32_t*) APB_SUB_PG_CSR_ADR;
-+    apb_sub_pg_csrs[PG_INTERRUPT_SRC_REG_ADDR] = 1;
++    apb_sub_pg_csrs[PG_INTR_SRC_REG_ADDR] = 1;
++    if (apb_sub_pg_csrs[PG_INTR_SRC_REG_ADDR] & 0x1) {
++
++        sbi_printf("OpenSBI: External interrupt: APB subsystem's PG access violation: "
++            "domain = %d, address = 0x%x\n",
++            apb_sub_pg_csrs[PG_INTR_CAUSE_DOMAIN_REG_ADDR],
++            apb_sub_pg_csrs[PG_INTR_CAUSE_ADDR_REG_ADDR]);
++
++        // Clear interrupt.
++        apb_sub_pg_csrs[PG_INTR_SRC_REG_ADDR] = 1;
++    }
 +
 +    uint32_t *sram_pg_csrs = (uint32_t*) SRAM_PG_CSR_ADR;
-+    sram_pg_csrs[PG_INTERRUPT_SRC_REG_ADDR] = 1;
++    if (sram_pg_csrs[PG_INTR_SRC_REG_ADDR] & 0x1) {
 +
-+    sbi_printf("Cleared PG's interrupt.\n");
++        sbi_printf("OpenSBI: External interrupt: SRAM subsystem's PG access violation: "
++            "domain = %d, address = 0x%x\n",
++            sram_pg_csrs[PG_INTR_CAUSE_DOMAIN_REG_ADDR],
++            sram_pg_csrs[PG_INTR_CAUSE_ADDR_REG_ADDR]);
++
++        // Clear interrupt.
++        sram_pg_csrs[PG_INTR_SRC_REG_ADDR] = 1;
++    }
 +
 +    return SBI_OK;
 +}
@@ -77,7 +96,7 @@ index dbf307c..b5ff589 100644
  	switch (mcause) {
  	case IRQ_M_TIMER:
  		sbi_timer_process();
-@@ -209,7 +241,10 @@ static int sbi_trap_nonaia_irq(struct sbi_trap_regs *regs, ulong mcause)
+@@ -209,7 +260,10 @@ static int sbi_trap_nonaia_irq(struct sbi_trap_regs *regs, ulong mcause)
  		sbi_ipi_process();
  		break;
  	case IRQ_M_EXT:
@@ -89,7 +108,7 @@ index dbf307c..b5ff589 100644
  	default:
  		return SBI_ENOENT;
  	}
-@@ -275,10 +310,11 @@ struct sbi_trap_regs *sbi_trap_handler(struct sbi_trap_regs *regs)
+@@ -275,10 +329,11 @@ struct sbi_trap_regs *sbi_trap_handler(struct sbi_trap_regs *regs)
  
  	if (mcause & (1UL << (__riscv_xlen - 1))) {
  		if (sbi_hart_has_extension(sbi_scratch_thishart_ptr(),

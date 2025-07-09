@@ -170,6 +170,21 @@ Note that the address ranges assigned to different modules are larger than the a
 | APB subsystem | Restricted address range mode with 8 address range entries |
 | AES-GCM | Time-sharing with context switching |
 
+## PG access violation
+
+If a VM, or any other module connected to the interconnect, tries to access an address that is not a part of the same domain according to PG's configuration, an external interrupt is raised that will result in the following message being printed to UART:
+```
+OpenSBI: External interrupt: <protected module>'s PG access violation: domain = <domain_id>, address = <address>
+```
+where `<protected moodule>` is the name of the module PG is protecting, `<domain_id>` is the DID of the domain that tried to access the address, and `<address>` is the address that was accessed.
+
+Following is an example of a message printed when a guest tries to access SRAM currently used by another guest VM:
+```
+OpenSBI: External interrupt: SRAM's PG access violation: domain = 1, address = 0x20000008
+```
+
+An interrupt raised by a PG is routed by PIC, BA51's costume interrupt controller, to the BA51-H hart where it is received as external interrupt by OpenSBI in M-mode. The external interrupt is currently not propagated to a guest VM. Meaning that the read and write instructions performed by the guest VM are always completed successfully: if read instruction is performed, 0 value is returned instead of the actual value, where the write instruction has no effect.
+
 ## Examples
 
 In order to see how individual modules are used in combination with PG, see the coresponding examples in the [examples](../) directory, e.g. a bare-metal example of how to use the AES-GCM accelerator can be found in [aes_gcm_acc_example](../aes_gcm_acc_example).

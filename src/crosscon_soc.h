@@ -75,10 +75,12 @@
 // PG's configuration register
 #define PG_CFG_REG_ADDR 1
 
-// (?) Set to 1, when PG raised interrupt. Write to ? to clear the interrupt.
-#define PG_INTERRUPT_SRC_REG_ADDR 2
-// (Read-only register): When interrupt was raised by PG, set to the domain that raised the interrupt.
-#define PG_INTERRUPT_CAUSE_REG_ADDR 3
+// (Read-write register) Set to 1, when PG raised interrupt. Write 1 to clear the interrupt.
+#define PG_INTR_SRC_REG_ADDR 2
+// (Read-only register): When interrupt was raised by PG, set to a domain that raised the interrupt.
+#define PG_INTR_CAUSE_DOMAIN_REG_ADDR 3
+// (Read-only register): When interrupt was raised by PG, set to a domain that raised the interrupt.
+#define PG_INTR_CAUSE_ADDR_REG_ADDR 4
 
 //
 // PG lock-release arbitration mode interface registers
@@ -143,11 +145,11 @@
 // State register fields
 // Needs to be set to HIGH when the master has provided the initialization parameters.
 #define AES_GCM_STATE_INIT_FLAG 0
-// HIGH when input data is ready. Can only be written to.
+// (Write-only) HIGH when input data is ready.
 #define AES_GCM_STATE_IN_D_RDY_FLAG 1
-// HIGH when output data is ready. Can only be read.
+// (Read-only) HIGH when output data is ready.
 #define AES_GCM_STATE_OUT_D_RDY_FLAG 2
-// HIGH when tag is ready.
+// (Read-only) HIGH when tag is ready.
 #define AES_GCM_STATE_TAG_RDY_FLAG 3
 
 //
