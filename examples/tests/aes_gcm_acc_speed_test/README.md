@@ -25,6 +25,7 @@ to setup and build the source files.
 When the test is executed you should see something similar to the following output from the guests
 ```
 data_len = 2961
+
 Encrypting with 128-bit key ...
 Done passing initial parameters.
 # of cycles to process data = 45792
@@ -32,6 +33,7 @@ Done passing initial parameters.
 # of cycles per block = 246
 encryption / decryption speed = 12703 Kbps
 tag (hex) = 0x8f53848fde84d30bbf8954f326f084e2
+
 Encrypting with 256-bit key ...
 Done passing initial parameters.
 # of cycles to process data = 46536

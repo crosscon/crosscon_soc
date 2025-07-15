@@ -171,10 +171,9 @@ void aes_gcm_cipher(
     printf("# of cycles to process data = %lu\n", nc_diff);
     uint32_t n_of_d_blocks = (d_len + 16 - 1) / 16;
     printf("# of processed blocks = %ld\n", n_of_d_blocks);
-    const uint32_t CPU_FREQUENCY = 25000000; // Hz
     const uint32_t n_cycles_per_block = (uint32_t) (nc_diff / n_of_d_blocks);
     printf("# of cycles per block = %lu\n", n_cycles_per_block);
-    uint32_t proc_speed = (uint32_t)((CPU_FREQUENCY / n_cycles_per_block) * 128);
+    uint32_t proc_speed = (uint32_t)((CPU_CLK / n_cycles_per_block) * 128);
     printf("encryption / decryption speed = %lu Kbps\n", proc_speed / 1024);
 
     // Wait for tag.
@@ -219,6 +218,7 @@ int main(void) {
     uint8_t ds1_data_out[ds1_data_len];
     uint8_t ds1_tag[16];
 
+    printf("\n");
     printf("Encrypting with 128-bit key ...\n");
 
     aes_gcm_cipher(
@@ -263,6 +263,7 @@ int main(void) {
     //    return 0;
     //}
 
+    printf("\n");
     printf("Encrypting with 256-bit key ...\n");
 
     aes_gcm_cipher(
