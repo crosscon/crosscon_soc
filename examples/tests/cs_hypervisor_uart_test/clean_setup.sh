@@ -6,11 +6,11 @@ if [[ "$user_input" == "Y" ]]; then
 
     set -x
 
-    rm -f maremetal-guest/src/platform/crosscon_soc/crosscon_soc.c
-    rm -f maremetal-guest/src/platform/crosscon_soc/inc/crosscon_soc.h
+    rm baremetal-guest/src/platform/crosscon_soc/crosscon_soc.c
+    rm baremetal-guest/src/platform/crosscon_soc/inc/crosscon_soc.h
     
-    rm -f maremetal-guest2/src/platform/crosscon_soc/crosscon_soc.c
-    rm -f maremetal-guest2/src/platform/crosscon_soc/inc/crosscon_soc.h
+    rm baremetal-guest2/src/platform/crosscon_soc/crosscon_soc.c
+    rm baremetal-guest2/src/platform/crosscon_soc/inc/crosscon_soc.h
     
     rm -rf opensbi/ CROSSCON-Hypervisor/
 
