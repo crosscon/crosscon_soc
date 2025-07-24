@@ -1,5 +1,5 @@
 diff --git a/src/arch/riscv/cpu.c b/src/arch/riscv/cpu.c
-index 4bdfb11..0203eef 100644
+index 4bdfb11..d8ccc93 100644
 --- a/src/arch/riscv/cpu.c
 +++ b/src/arch/riscv/cpu.c
 @@ -8,6 +8,8 @@
@@ -11,7 +11,7 @@ index 4bdfb11..0203eef 100644
  cpuid_t CPU_MASTER __attribute__((section(".data")));
  
  /* Perform architecture dependent cpu cores initializations */
-@@ -30,6 +32,18 @@ void cpu_arch_init(cpuid_t cpuid, paddr_t load_addr)
+@@ -30,6 +32,20 @@ void cpu_arch_init(cpuid_t cpuid, paddr_t load_addr)
      spmp_init(&cpu()->arch.spmp_hyp, PRIV_HYP);
      spmp_set_active(&cpu()->arch.spmp_hyp, true);
  #endif
@@ -19,9 +19,11 @@ index 4bdfb11..0203eef 100644
 +    // CROSSCON SoC specific
 +    // TODO: This is specific for the platform. Find a better place for this.
 +
-+    // Allow both VM1 (domain 0) and VM2 (domain 1) to access UART.
-+    set_pg_rspace_entry((unsigned int *) APB_SUB_PG_CSR_ADR, 0, 0, UART_BASE_ADR, UART_BASE_ADR + 0xfffff, true, true);
-+    set_pg_rspace_entry((unsigned int *) APB_SUB_PG_CSR_ADR, 2, 1, UART_BASE_ADR, UART_BASE_ADR + 0xfffff, true, true);
++    // Allow both VM1 (domain 0) to access UART 0 and VM2 (domain 1) to access UART 1.
++    set_pg_rspace_entry((unsigned int *) APB_SUB_PG_CSR_ADR, 0, 0, UART_0_BASE_ADR, UART_0_BASE_ADR + 0xfffff, true, true);
++    //set_pg_rspace_entry((unsigned int *) APB_SUB_PG_CSR_ADR, 2, 0, UART_1_BASE_ADR, UART_1_BASE_ADR + 0xfffff, true, true);
++    //set_pg_rspace_entry((unsigned int *) APB_SUB_PG_CSR_ADR, 4, 1, UART_0_BASE_ADR, UART_0_BASE_ADR + 0xfffff, true, true);
++    set_pg_rspace_entry((unsigned int *) APB_SUB_PG_CSR_ADR, 2, 1, UART_1_BASE_ADR, UART_1_BASE_ADR + 0xfffff, true, true);
 +
 +    // TODO: Needs to be dynamically set.
 +    // PG's QMEM PG so that AES-GCM can access VM1's and VM2's memory over AHB bus.
@@ -30,6 +32,40 @@ index 4bdfb11..0203eef 100644
  }
  
  void cpu_arch_standby(void)
+diff --git a/src/arch/riscv/interrupts.c b/src/arch/riscv/interrupts.c
+index 7d0aba2..77907c1 100644
+--- a/src/arch/riscv/interrupts.c
++++ b/src/arch/riscv/interrupts.c
+@@ -16,6 +16,8 @@
+ #include <fences.h>
+ #include <arch/aclint.h>
+ 
++#include <crosscon_soc.h>
++
+ #define USE_ACLINT_IPI() (ACLINT_PRESENT() && (IRQC != AIA))
+ 
+ irqid_t irqc_timer_int_id;
+@@ -82,6 +84,11 @@ void interrupts_arch_enable(irqid_t int_id, bool en)
+ 
+ void interrupts_arch_handle(void)
+ {
++    // CROSSCON SoC specific: Set DID to 0.
++    uint32_t *pg_add_sig_drv = (uint32_t*) PG_ADD_SIG_DRV_ADR;
++    uint32_t prev_did = pg_add_sig_drv[0];
++    pg_add_sig_drv[0] = 0;
++
+ #if (IRQC == AIA)
+     unsigned long stopi = csrs_stopi_read();
+ 
+@@ -127,6 +134,8 @@ void interrupts_arch_handle(void)
+             break;
+     }
+ #endif
++
++    pg_add_sig_drv[0] = prev_did;
+ }
+ 
+ bool interrupts_arch_check(irqid_t int_id)
 diff --git a/src/arch/riscv/objects.mk b/src/arch/riscv/objects.mk
 index 4684074..b639765 100644
 --- a/src/arch/riscv/objects.mk
@@ -54,8 +90,40 @@ index 5fe72f1..f65f4b7 100644
      csrw sscratch, a3
      add a4, a3, t1
  	call boot_clear
+diff --git a/src/arch/riscv/sync_exceptions.c b/src/arch/riscv/sync_exceptions.c
+index 84f73ab..62ff2e9 100644
+--- a/src/arch/riscv/sync_exceptions.c
++++ b/src/arch/riscv/sync_exceptions.c
+@@ -11,6 +11,8 @@
+ #include <arch/instructions.h>
+ #include <arch/fences.h>
+ 
++#include <crosscon_soc.h>
++
+ static void internal_exception_handler(unsigned long gprs[])
+ {
+     for (int i = 0; i < 31; i++) {
+@@ -185,6 +187,11 @@ static const size_t sync_handler_table_size = sizeof(sync_handler_table) / sizeo
+ void sync_exception_handler(void);
+ void sync_exception_handler(void)
+ {
++    // CROSSCON SoC specific: Set the DID to 0.
++    uint32_t *pg_add_sig_drv = (uint32_t*) PG_ADD_SIG_DRV_ADR;
++    uint32_t prev_did = pg_add_sig_drv[0];
++    pg_add_sig_drv[0] = 0;
++
+     size_t pc_step = 0;
+     unsigned long _scause = csrs_scause_read();
+     struct vcpu* calling_vcpu = cpu()->vcpu;
+@@ -207,4 +214,6 @@ void sync_exception_handler(void)
+     if (vcpu_arch_is_on(cpu()->vcpu) && !cpu()->vcpu->active) {
+         cpu_standby();
+     }
++
++    pg_add_sig_drv[0] = prev_did;
+ }
 diff --git a/src/arch/riscv/vm.c b/src/arch/riscv/vm.c
-index 7dbc935..8cb4a28 100644
+index 7dbc935..d4efc73 100644
 --- a/src/arch/riscv/vm.c
 +++ b/src/arch/riscv/vm.c
 @@ -11,6 +11,8 @@
@@ -67,7 +135,7 @@ index 7dbc935..8cb4a28 100644
  void vm_arch_init(struct vm* vm, const struct vm_config* vm_config)
  {
  #ifdef MEM_PROT_MMU
-@@ -133,6 +135,13 @@ void vcpu_restore_state(struct vcpu* vcpu)
+@@ -133,6 +135,12 @@ void vcpu_restore_state(struct vcpu* vcpu)
      spmp_set_active(&vcpu->arch.spmp, true);
      spmp_restore(&vcpu->arch.spmp);
  #endif
@@ -75,7 +143,6 @@ index 7dbc935..8cb4a28 100644
 +    // CROSSCON SoC specific
 +    // TODO: This is specific for the platform. Find a better place for this.
 +
-+    #define PG_ADD_SIG_DRV_ADR 0x23100000
 +    uint32_t *pg_add_sig_drv = (uint32_t*) PG_ADD_SIG_DRV_ADR;
 +    pg_add_sig_drv[0] = vcpu->vm->id;
  }

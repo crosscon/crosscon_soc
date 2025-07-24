@@ -25,7 +25,7 @@ index 0a50e95..25069b8 100644
  carray-sbi_ecall_exts-$(CONFIG_SBI_ECALL_TIME) += ecall_time
  libsbi-objs-$(CONFIG_SBI_ECALL_TIME) += sbi_ecall_time.o
 diff --git a/lib/sbi/sbi_trap.c b/lib/sbi/sbi_trap.c
-index dbf307c..242691f 100644
+index dbf307c..be75386 100644
 --- a/lib/sbi/sbi_trap.c
 +++ b/lib/sbi/sbi_trap.c
 @@ -23,6 +23,8 @@
@@ -108,7 +108,19 @@ index dbf307c..242691f 100644
  	default:
  		return SBI_ENOENT;
  	}
-@@ -275,10 +329,11 @@ struct sbi_trap_regs *sbi_trap_handler(struct sbi_trap_regs *regs)
+@@ -262,6 +316,11 @@ static int sbi_trap_aia_irq(struct sbi_trap_regs *regs, ulong mcause)
+  */
+ struct sbi_trap_regs *sbi_trap_handler(struct sbi_trap_regs *regs)
+ {
++  #define PG_ADD_SIG_DRV_ADR 0x23100000
++  uint32_t *pg_add_sig_drv = (uint32_t*) PG_ADD_SIG_DRV_ADR;
++  uint32_t prev_did = pg_add_sig_drv[0];
++  pg_add_sig_drv[0] = 0;
++
+ 	int rc = SBI_ENOTSUPP;
+ 	const char *msg = "trap handler failed";
+ 	ulong mcause = csr_read(CSR_MCAUSE);
+@@ -275,10 +334,11 @@ struct sbi_trap_regs *sbi_trap_handler(struct sbi_trap_regs *regs)
  
  	if (mcause & (1UL << (__riscv_xlen - 1))) {
  		if (sbi_hart_has_extension(sbi_scratch_thishart_ptr(),
@@ -124,6 +136,15 @@ index dbf307c..242691f 100644
  		if (rc) {
  			msg = "unhandled local interrupt";
  			goto trap_error;
+@@ -322,6 +382,8 @@ struct sbi_trap_regs *sbi_trap_handler(struct sbi_trap_regs *regs)
+ 		break;
+ 	}
+ 
++  pg_add_sig_drv[0] = prev_did;
++
+ trap_error:
+ 	if (rc)
+ 		sbi_trap_error(msg, rc, mcause, mtval, mtval2, mtinst, regs);
 diff --git a/platform/beyond/ba51_cs/Kconfig b/platform/beyond/ba51_cs/Kconfig
 new file mode 100644
 index 0000000..5210f0b
@@ -250,10 +271,10 @@ index 0000000..0eb3ea0
 +# FW_PAYLOAD_FDT_ADDR=0x82200000
 diff --git a/platform/beyond/ba51_cs/platform.c b/platform/beyond/ba51_cs/platform.c
 new file mode 100644
-index 0000000..8ad2876
+index 0000000..3a304c1
 --- /dev/null
 +++ b/platform/beyond/ba51_cs/platform.c
-@@ -0,0 +1,255 @@
+@@ -0,0 +1,257 @@
 +/*
 + * SPDX-License-Identifier: BSD-2-Clause
 + *
@@ -350,7 +371,7 @@ index 0000000..8ad2876
 +    // Configure APB subsystem's PG to allow access to UART to domain 0.
 +    set_pg_rspace_entry(
 +        (unsigned int *) APB_SUB_PG_CSR_ADR, 0, 0,
-+        UART_BASE_ADR, UART_BASE_ADR + 0xfffff,
++        UART_0_BASE_ADR, UART_0_BASE_ADR + 0xfffff,
 +        true, true);
 +
 +    return 0;
@@ -427,7 +448,9 @@ index 0000000..8ad2876
 + */
 +static int beyond_ba51_console_init(void)
 +{
-+    return uart8250_init(UART_BASE_ADR, CPU_CLK, 115200, 0, 1, 0);
++    // TODO
++    uart8250_init(UART_1_BASE_ADR, CPU_CLK, 115200, 0, 1, 0);
++    return uart8250_init(UART_0_BASE_ADR, CPU_CLK, 115200, 0, 1, 0);
 +}
 +
 +/*

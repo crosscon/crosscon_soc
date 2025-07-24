@@ -1,0 +1,2 @@
+ARCH:=riscv
+drivers:=

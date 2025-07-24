@@ -6,4 +6,4 @@ if [ "$#" -ne 1 ]; then
     exit 1
 fi
 
-tio -e --map INLCRNL,ONLCRNL $1
+tio -b 115200 -e --map INLCRNL,ONLCRNL $1
