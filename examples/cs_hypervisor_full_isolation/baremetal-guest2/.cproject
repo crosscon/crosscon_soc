@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?fileVersion 4.0.0?><cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
+	<storageModule moduleId="org.eclipse.cdt.core.settings">
+		<cconfiguration id="com.beyondsemi.toolchain.gnu.rv.elf.base.905977098">
+			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="com.beyondsemi.toolchain.gnu.rv.elf.base.905977098" moduleId="org.eclipse.cdt.core.settings" name="Default">
+				<externalSettings/>
+				<extensions>
+					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
+					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
+				</extensions>
+			</storageModule>
+			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
+				<configuration buildProperties="" id="com.beyondsemi.toolchain.gnu.rv.elf.base.905977098" name="Default" parent="org.eclipse.cdt.build.core.emptycfg">
+					<folderInfo id="com.beyondsemi.toolchain.gnu.rv.elf.base.905977098.922928049" name="/" resourcePath="">
+						<toolChain id="com.beyondsemi.toolchain.gnu.rv.elf.base.2142923940" name="RISC-V ELF GNU toolchain" superClass="com.beyondsemi.toolchain.gnu.rv.elf.base">
+							<option id="com.beyondsemi.option.toolchain.gnu.rv.platform.2013604342" name="target platform" superClass="com.beyondsemi.option.toolchain.gnu.rv.platform"/>
+							<option id="com.beyondsemi.option.toolchain.gnu.rv.endianness.869477921" name="Endianness" superClass="com.beyondsemi.option.toolchain.gnu.rv.endianness"/>
+							<option id="com.beyondsemi.option.toolchain.gnu.rv.isa.1387537856" name="CPU ISA (-march)" superClass="com.beyondsemi.option.toolchain.gnu.rv.isa"/>
+							<option id="com.beyondsemi.option.toolchain.gnu.rv.abi.742452368" name="ABI" superClass="com.beyondsemi.option.toolchain.gnu.rv.abi"/>
+							<option id="com.beyondsemi.option.toolchain.gnu.rv.mnoharddiv.1420486751" name="don't generate hardware integer division instructions (-mno-div)" superClass="com.beyondsemi.option.toolchain.gnu.rv.mnoharddiv"/>
+							<option id="com.beyondsemi.option.toolchain.gnu.rv.mnohardfloatdiv.1471267002" name="don't generate hardware floating point division and sqrt instructions (-mno-fdiv)" superClass="com.beyondsemi.option.toolchain.gnu.rv.mnohardfloatdiv"/>
+							<option id="com.beyondsemi.option.toolchain.gnu.rv.flto.771482799" name="enable link time optimization (-flto -ffat-lto-objects)" superClass="com.beyondsemi.option.toolchain.gnu.rv.flto"/>
+							<option id="com.beyondsemi.option.toolchain.gnu.rv.mnorelax.1278588591" name="disable linker relaxations (-mno-relax)" superClass="com.beyondsemi.option.toolchain.gnu.rv.mnorelax"/>
+							<targetPlatform binaryParser="org.eclipse.cdt.core.ELF" id="com.beyondsemi.target.gnu.platform.rv.elf.1854101305" superClass="com.beyondsemi.target.gnu.platform.rv.elf"/>
+							<builder id="com.beyondsemi.rv.builder.cdt.gnu.417259164" managedBuildOn="false" name="Gnu Make Builder.Default" superClass="com.beyondsemi.rv.builder.cdt.gnu"/>
+							<tool id="com.beyondsemi.tool.gnu.rv.elf.compiler.c.base.1448860722" name="RISC-V ELF GNU C compiler" superClass="com.beyondsemi.tool.gnu.rv.elf.compiler.c.base"/>
+							<tool id="com.beyondsemi.tool.gnu.rv.elf.compiler.cpp.base.722769507" name="RISC-V ELF GNU C++ compiler" superClass="com.beyondsemi.tool.gnu.rv.elf.compiler.cpp.base"/>
+							<tool id="com.beyondsemi.tool.gnu.rv.elf.linker.c.base.1637902249" name="RISC-V ELF GNU C linker" superClass="com.beyondsemi.tool.gnu.rv.elf.linker.c.base"/>
+							<tool id="com.beyondsemi.tool.gnu.rv.elf.linker.cpp.base.1766221142" name="BA ELF GNU C++ linker" superClass="com.beyondsemi.tool.gnu.rv.elf.linker.cpp.base"/>
+							<tool id="com.beyondsemi.tool.gnu.rv.elf.assembler.base.1252992068" name="RISC-V ELF GNU assembler" superClass="com.beyondsemi.tool.gnu.rv.elf.assembler.base"/>
+							<tool id="com.beyondsemi.tool.gnu.rv.elf.archiver.base.1320098960" name="RISC-V ELF GNU archiver" superClass="com.beyondsemi.tool.gnu.rv.elf.archiver.base"/>
+							<tool id="com.beyondsemi.tool.gnu.rv.elf.size.base.1740242233" name="RISC-V ELF GNU size" superClass="com.beyondsemi.tool.gnu.rv.elf.size.base"/>
+							<tool id="com.beyondsemi.tool.gnu.rv.elf.objcopy.base.603807975" name="RISC-V ELF GNU objcopy" superClass="com.beyondsemi.tool.gnu.rv.elf.objcopy.base"/>
+						</toolChain>
+					</folderInfo>
+				</configuration>
+			</storageModule>
+			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+		</cconfiguration>
+	</storageModule>
+	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
+		<project id="bao-baremetal-guest2.null.394656784" name="bao-baremetal-guest2"/>
+	</storageModule>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
+</cproject>

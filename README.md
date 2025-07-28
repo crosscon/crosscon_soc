@@ -1,23 +1,31 @@
 # CROSSCON SoC
 
-Here you can find the initial version of the _CROSSCON SoC_: a system-on-chip (SoC) developed as part of the [CROSSCON project](https://crosscon.eu/). The repository contains an overview of the CROSSCON SoC, its bitstream and instructions on how to use it with the Arty-A7 100T board. For a detailed description of the CROSSCON SoC, please refer to deliverable D4.1 "CROSSCON Extensions to Domain Specific Hardware Architectures Documentation — Draft". This repository is a part of deliverable D4.2 "CROSSCON Extension Primitives to Domain Specific Hardware Architectures — Initial Version". 
+Here you can find the _CROSSCON SoC_: a system-on-chip (SoC) developed as part of the [CROSSCON project](https://crosscon.eu/). The repository contains an overview of the CROSSCON SoC, its bitstream and instructions on how to use it with the Arty-A7 100T board. For a detailed description of the CROSSCON SoC, please refer to deliverable D4.3 "CROSSCON Extensions to Domain Specific Hardware Architectures Documentation — Final". This repository is a part of deliverable D4.4 "CROSSCON Extension Primitives to Domain Specific Hardware Architectures — Final Version". 
 
 ## Overview
 
 **CROSSCON SoC** is a SoC design, developed as part of the [CROSSCON project](https://crosscon.eu/), that provides a secure RISC-V execution environment for mixed-criticality IoT devices that require strong software (SW) and hardware (HW) isolation, flexibility, small code size and low power consumption. The CROSSCON SoC supports strong software isolation through virtualization-based trusted execution environments (TEEs) where HW modules connected to the interconnect can be shared between TEEs without compromising isolation.
 
 <p align="center">
-    <img src="./imgs/soc_initial_architecture.drawio.png" width=70% height=70%>
+    <img src="./imgs/crosscon_soc_1.0_architecture.png" width=70% height=70%>
 </p>
-<p align="center">Figure 1: The current architecture of the CROSSCON SoC</p>
+<p align="center">Figure 1: The architecture of the CROSSCON SoC</p>
 
 Figure 1 shows a high-level architecture of the current version of the CROSSCON SoC. The CROSSCON SoC is built around the [Beyond Semiconductor's BA51](https://www.cast-inc.com/processors/risc-v/ba51) RISC-V core and includes all the necessary infrastructure that one needs to develop embedded applications (e.g. JTAG support and UART).
 
 BA51-H contains the fist implementation of the unified (2-stage) SPMP unit, which is one of the possible SPMP candidates for the standardization as part of the [RISC-V SPMP standardization effort](https://github.com/riscv/riscv-spmp?tab=readme-ov-file). We have extended Spike simulator, the golden model of RISC-V specification, with the unified (2-stage) SPMP extension, which servers a reference implementation of the unified SPMP model and allows us to obtain a reference execution environment for the BA51-H core. The extended Spike can be configured to simulate `rv32imafch_spmp_sstc_zc_zicntr` ISA and is available as a [separate repository](https://github.com/crosscon/riscv-isa-sim).
 
-Furthermore, the CROSSCON SoC contains the first prototype implementation of **Perimeter guard (PG)**: a mechanism that allows to share HW modules between VMs while preserving their isolation. PG is a HW module placed between the SoC interconnect and a HW module that we want to share, as, for example, cryptographic accelerator. It can be used to control which VMs and bus masters can access the module; and further, allows the HW module to be "reset" before giving access to the module to a different VM / master. Resetting the module's state prevents any state related information flows through the HW module. PG is planned to support several modes of operation, whereas the current prototype only supports time-sharing with reset mode with lock-release arbitration. In the current version of the CROSSCON SoC, as shown in Figure 1, we use PG to control access to SRAM so that it can be shared between different VMs without compromising their isolation.
+Furthermore, the CROSSCON SoC contains an implementation of **Perimeter guard (PG)**: a mechanism that allows to share HW modules between VMs while preserving their isolation. PG is a HW module placed between the SoC interconnect and a HW module that we want to share, as, for example, cryptographic accelerator. It can be used to control which VMs and bus masters can access the module; and further, allows the module to be shared between several VMs / masters in a secure manner. This can be done by either "resetting" the module or by switching the module's context / state before granting the access to a different VM / master. Resetting and switching the module's state prevents state related information flows through the HW module, and furthermore, can be used to address timing related attacks. PG supports several operation modes, which are selected during the integration into a SoC. In the CROSSCON SoC, all the HW modules connected to the AHB interconnect are protected by PG.
 
-A more detailed description of the CROSSCON SoC, BA51-H and PG can be found in deliverable D4.1 "ROSSCON Extensions to Domain Specific Hardware Architectures Documentation — Draft" of the [CROSSCON project](https://crosscon.eu/).
+To show how PG can be used, we have **extended AES-GCM accelerator to support context switching** on block granularity. This allows an encryption of messages to be interleaved on block-by-block basses, allowing the module to be shared between several VMs , while at the same time preventing denial of service attacks. We use the extended AES-GCM with PG in Time-sharing with context-switching operation mode.
+
+A more detailed description of the CROSSCON SoC, BA51-H, PG and how we extended AES-GCM can be found in deliverable D2.3 "CROSSCON Open Specification - Final" and deliverable D4.3 "ROSSCON Extensions to Domain Specific Hardware Architectures Documentation — Final" of the [CROSSCON project](https://crosscon.eu/).
+
+Further information about the architecture of the SoC can also be found in README of [cs_hypervisor_with_aes_gcm_example](examples/cs_hypervisor_with_aes_gcm_example) example.
+
+## Threat model
+
+The threat model we aim to protect against is described in the deliverable D2.3 "CROSSCON Open Specification - Final" in Chapter 7.2.3 (The threat model). But briefly, the attacker has control of the software in one of the VMs (APP1 or APP2) and tries to learn something about the other VM, e.g. either by finding the vulnerability in the isolation provided by BA51-H (uSPMP, interrupts, etc.) or try to get some information through a shared hardware module, for example AES-GCM accelerator.
 
 ## Running the examples
 
@@ -27,6 +35,8 @@ You can try out the CROSSCON SoC by running it on the Arty-A7 100T board with on
 3. Connect a debug key to the BA51-H, upload the binary of the example and run it.
 
 Here we'll cover how to get a basic Perimeter guard example running. If you want to see a more fully featured example, see the [cs_hypervisor_with_aes_gcm_example](examples/cs_hypervisor_with_aes_gcm_example) that shows how to use CROSSCON SoC with the [CROSSCON Hypervisor](https://github.com/crosscon/CROSSCON-Hypervisor) and provides further details, including how to use AES-GCM accelerators from a guest VM.
+
+If you want to see an example, where we fully isolate two VMs, including UART, that are using AES-GCM accelerator, see the [cs_hypervisor_full_isolation](examples/cs_hypervisor_full_isolation) example. Note that for this example, each VM is writing to a separate UART, which means that you will need two separate UART-to-USB serial adapters to see the output.
 
 Note that some of the examples might have more specific instructions.
 

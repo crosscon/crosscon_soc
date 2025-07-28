@@ -134,13 +134,21 @@ msg = 'Test message of the guest vm 1. Test message of the guest vm 1. Test mess
 Figure 1 shows the basic architecture of the CROSSCON SoC in the `crosscon_soc_a7_v0.4.4.bit` bitstream.
 
 <p align="center">
-    <img src="../../imgs/crosscon_soc_0.4.4_architecture.png" width=70% height=70%>
+    <img src="../../imgs/crosscon_soc_1.0_architecture.png" width=70% height=70%>
 </p>
 <p align="center">Figure 1: CROSSCON SoC architecture of the bitstream 0.4.2</p>
 
-The example is configured to run two guest VM's, on top of the CROSSCON Hypervisor + SoC, that have access to AES-GCM accelerator, protected by PG, and UART. AES-GCM is memory mapped to the execution environment of both VMs and can be used by the VMs simultaneously as the PG handles the arbitration via context switching. The UART is shared between the domains without arbitration.
+The example is configured to run two guest VM's, on top of the CROSSCON Hypervisor + SoC, that have access to AES-GCM accelerator, protected by PG, and UART. AES-GCM is memory mapped to the execution environment of both VMs and can be used by the VMs simultaneously as the PG handles the arbitration via context switching. The UART 0 is shared between the domains without arbitration.
 
 This version of the SoC supports only two domains because of the FPGA size limitations of the Arty-A7 board.
+
+## Memory layout
+
+The SoC has 256KB of SRAM memory which is divided between the software stack in the following way:
+- 0x00000 - 0x2ffff: OpenSBI (192KB)
+- 0x30000 - 0x5ffff: CROSSCON Hypervisor (192KB)
+- 0x60000 - 0x6ffff: Guest VM 1 (64KB) 
+- 0x70000 - 0x7ffff: Guest VM 2 (64KB) 
 
 ### Memory map
 
@@ -188,14 +196,14 @@ An interrupt raised by a PG is routed by PIC, BA51's costume interrupt controlle
 
 ## Examples
 
-In order to see how individual modules are used in combination with PG, see the coresponding examples in the [examples](../) directory, e.g. a bare-metal example of how to use the AES-GCM accelerator can be found in [aes_gcm_acc_example](../aes_gcm_acc_example).
+In order to see how individual modules are used in combination with PG, see the corresponding examples in the [examples](../) directory, e.g. a bare-metal example of how to use the AES-GCM accelerator can be found in [aes_gcm_acc_example](../aes_gcm_acc_example).
 
 ## The threat model
 
-The threat model is described in the deliverable D2.4 in Chapter 7.2.3 (The threat model). Summary: The attacker has control of the software in one of the VMs (APP1 or APP2) and tries to learn something about the other VM, e.g. either by finding the vulnerability in the isolation provided by BA51-H (sPMP, interrupts, etc.) or try to get some information through a shared hardware module, for example AES-GCM accelerator.
+The threat model is described in the deliverable D2.3 "CROSSCON Open Specification - Final" in Chapter 7.2.3 (The threat model). In short, the attacker has control of the software in one of the VMs (APP1 or APP2) and tries to learn something about the other VM, e.g. either by finding the vulnerability in the isolation provided by BA51-H (uSPMP, interrupts, etc.) or try to get some information through a shared hardware module, for example AES-GCM accelerator.
 
 ## Current SoC limitations
 
 We have disabled the APLIC extension in the current version of the BA51-H because the extension is not yet fully verified. Therefore, external interrupt are not used to notify VMs if AES-GCM has finished processing a block.
 
-The UART is currently shared between the two domains. This will be fixed in the later version of the CROSSCON SoC when two UARTs will be available so that the user will be able to connect to the Arty-A7 through separate debug keys.
+The UART is currently shared between two domains. This will be fixed in the later version of the CROSSCON SoC when two UARTs will be available so that the user will be able to connect to the Arty-A7 through separate debug keys.
