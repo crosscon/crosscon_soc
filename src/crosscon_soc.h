@@ -77,8 +77,6 @@
 // PG configuration registers
 //
 
-// TODO: Improve documentation.
-
 // PG's configuration register
 #define PG_CFG_REG_ADDR 1
 
@@ -127,8 +125,6 @@
 //
 // AES-GCM accelerator configuration registers
 //
-
-// TODO: Improve documentation.
 
 // State register
 #define AES_GCM_STATE_REG 0
