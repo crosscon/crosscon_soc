@@ -1,4 +1,4 @@
-# Test: CROSSCON Hypervisor with two guests that try to access SRAM at the same time
+# CROSSCON Hypervisor with two guest VMs that use AES-GCM accelerator with full isolation
 
 Here you can find an example setup of CROSSCON Hypervisor with two guests VMs that are fully isolated, including UART, and are using the AES-GCM accelerator to encrypt and decrypt a block of data at the same time.
 
@@ -126,7 +126,7 @@ msg = 'Test message of the guest vm 1. Test message of the guest vm 1. Test mess
 
 ## Memory layout
 
-The SoC has 256KB of SRAM memory which is divided between the software stack in the following way:
+The SoC has 512KB of SRAM memory which is divided between the software stack in the following way:
 - 0x00000 - 0x2ffff: OpenSBI (192KB)
 - 0x30000 - 0x67fff: CROSSCON Hypervisor (224KB)
 - 0x68000 - 0x73fff: Guest VM 1 (48KB) 

@@ -1,4 +1,4 @@
-# Test: CROSSCON Hypervisor with two guests that try to access SRAM at the same time
+# Test: CROSSCON Hypervisor with two guest VM's where each is using its own UART
 
 Here you can find a test that runs two guest VMs on top of CROSSCON Hypervisor where each VM prints to a different UART.
 
