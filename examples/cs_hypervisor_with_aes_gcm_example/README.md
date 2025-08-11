@@ -1,10 +1,10 @@
 # CROSSCON Hypervisor with AES-GCM accelerator example
 
-Here you can find an example setup of CROSSCON Hypervisor with two guests VMs that are using the AES-GCM accelerator at the same time.
+Here you can find an example setup of CROSSCON Hypervisor with two guests VMs that are using the AES-GCM accelerator at the same time. Furthermore, you can find additional information about the architecture of the CROSSCON SoC.
 
 ## Prerequisites
 
-Follow the instruction in [README.md](../../README.md) to setup the cross-compilation toolchain, connect the Arty-A7 board and upload the `crosscon_soc_a7_v0.4.4.bit` bitstream. Note that this bitstream has an different version of the CROSSCON SoC which architecture is described down below.
+Follow the instruction in [README.md](../../README.md) to setup the cross-compilation toolchain, connect the Arty-A7 board and upload the `crosscon_soc_a7_v1.0.bit` bitstream.
 
 Note that the path to the RISC-V cross-compilation toolchain should be available through `RISCV` variable as described in Setup the RISC-V toolchain section of [README.md](../../README.md).
 
@@ -28,7 +28,7 @@ Run
 ./run_gdb.sh
 ```
 
-Now the program was executed. If you setup everything correctly, you should something similar to the following output on UART. Note that because the access to UART is not synchronized, your input might overlap.
+Now the program was executed. If you setup everything correctly, you should something similar to the following output on UART. Note that, because the use of UART is not synchronized, guest VM outputs might overlap.
 ```
 ...
    _____ _____   ____   _____ _____  _____ ____  _   _
@@ -131,7 +131,7 @@ msg = 'Test message of the guest vm 1. Test message of the guest vm 1. Test mess
 
 ## SoC architecture
 
-Figure 1 shows the basic architecture of the CROSSCON SoC in the `crosscon_soc_a7_v0.4.4.bit` bitstream.
+Figure 1 shows the basic architecture of the CROSSCON SoC in the `crosscon_soc_a7_v1.0.bit` bitstream.
 
 <p align="center">
     <img src="../../imgs/crosscon_soc_1.0_architecture.png" width=70% height=70%>
@@ -144,7 +144,7 @@ This version of the SoC supports only two domains because of the FPGA size limit
 
 ## Memory layout
 
-The SoC has 256KB of SRAM memory which is divided between the software stack in the following way:
+The SoC has 512KB of SRAM memory which is divided between the software stack in the following way:
 - 0x00000 - 0x2ffff: OpenSBI (192KB)
 - 0x30000 - 0x5ffff: CROSSCON Hypervisor (192KB)
 - 0x60000 - 0x6ffff: Guest VM 1 (64KB) 
@@ -171,7 +171,12 @@ Visible only to BA51-H:
 
 Note that the address ranges assigned to different modules are larger than the actual ranges used by the modules. The modules only use the lower bits when resolving which register is addressed. Thus multiple addresses in the address range can map to the same register.
 
-| Module | PG's operation mode |
+### Interconnect isolation
+
+The CROSSCON SoC's interconnect levregres PG to obtain transfer isolation between domains / guest VM's and allows modules to be shared between domains in a safe manner.
+
+Following table lists the PG operation modes used for different modules connected to the interconnect:
+| Module | PG operation mode |
 |---------------|--------------|
 | QMEM | Restricted address range mode with 8 address range entries |
 | SRAM |  Time‐sharing with reset and lock‐release arbitration mode |
@@ -204,6 +209,4 @@ The threat model is described in the deliverable D2.3 "CROSSCON Open Specificati
 
 ## Current SoC limitations
 
-We have disabled the APLIC extension in the current version of the BA51-H because the extension is not yet fully verified. Therefore, external interrupt are not used to notify VMs if AES-GCM has finished processing a block.
-
-The UART is currently shared between two domains. This will be fixed in the later version of the CROSSCON SoC when two UARTs will be available so that the user will be able to connect to the Arty-A7 through separate debug keys.
+We have disabled the APLIC extension in the current version of the BA51-H because the extension is not yet fully verified. Because of that, the external interrupts are currently not propagated to guest VM's but are instead handled by OpenSBI in M-mode.
