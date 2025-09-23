@@ -2,8 +2,9 @@
 
 # Fail the entire script on error.
 set -e
+#set -x
 
-export CROSS_COMPILE=$RISCV/riscv32-unknown-elf-
+export CROSS_COMPILE=riscv32-unknown-elf-
 
 export ARCH_SUB=riscv32
 
@@ -19,7 +20,7 @@ echo "# Building 1st guest ..."
 echo "#"
 echo ""
 
-make -C baremetal-guest PLATFORM=crosscon_soc ARCH_SUB=$ARCH_SUB MEM_BASE=0x60000 riscv_march=$PLATFORM_RISCV_ISA riscv_mabi=$PLATFORM_RISCV_ABI
+make -C baremetal-guest PLATFORM=crosscon_soc ARCH_SUB=$ARCH_SUB MEM_BASE=0x68000 riscv_march=$PLATFORM_RISCV_ISA riscv_mabi=$PLATFORM_RISCV_ABI
 
 echo ""
 echo "#"
@@ -27,7 +28,7 @@ echo "# Building 2nd guest ..."
 echo "#"
 echo ""
 
-make -C baremetal-guest2 PLATFORM=crosscon_soc ARCH_SUB=$ARCH_SUB MEM_BASE=0x70000 riscv_march=$PLATFORM_RISCV_ISA riscv_mabi=$PLATFORM_RISCV_ABI
+make -C baremetal-guest2 PLATFORM=crosscon_soc ARCH_SUB=$ARCH_SUB MEM_BASE=0x74000 riscv_march=$PLATFORM_RISCV_ISA riscv_mabi=$PLATFORM_RISCV_ABI
 
 echo ""
 echo "#"

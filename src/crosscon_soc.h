@@ -82,9 +82,9 @@
 
 // (Read-write register) Set to 1, when PG raised interrupt. Write 1 to clear the interrupt.
 #define PG_INTR_SRC_REG_ADDR 2
-// (Read-only register): When interrupt was raised by PG, set to a domain that raised the interrupt.
+// (Read-only register): A domain ID of the domain that raised the interrupt.
 #define PG_INTR_CAUSE_DOMAIN_REG_ADDR 3
-// (Read-only register): When interrupt was raised by PG, set to a domain that raised the interrupt.
+// (Read-only register): An address of a transfer that raised the interrupt.
 #define PG_INTR_CAUSE_ADDR_REG_ADDR 4
 
 //

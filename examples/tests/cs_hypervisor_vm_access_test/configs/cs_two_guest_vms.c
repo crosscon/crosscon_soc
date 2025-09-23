@@ -7,9 +7,9 @@ VM_IMAGE(baremetal2_image, "../baremetal-guest2/build/crosscon_soc/baremetal.bin
 
 struct vm_config vm1 = {
 
-    .image = VM_IMAGE_BUILTIN(baremetal_image, 0x60000),
+    .image = VM_IMAGE_BUILTIN(baremetal_image, 0x68000),
 
-    .entry = 0x60000,
+    .entry = 0x68000,
 
     .platform = {
 
@@ -18,8 +18,8 @@ struct vm_config vm1 = {
         .region_num = 1,
         .regions = (struct vm_mem_region[]) {
             {
-                .base = 0x60000,
-                .size = 0x0ffff,
+                .base = 0x68000,
+                .size = 0x0c000,
             },
         },
 
@@ -65,9 +65,9 @@ struct vm_config vm1 = {
 
 struct vm_config vm2 = {
 
-    .image = VM_IMAGE_BUILTIN(baremetal2_image, 0x70000),
+    .image = VM_IMAGE_BUILTIN(baremetal2_image, 0x74000),
 
-    .entry = 0x70000,
+    .entry = 0x74000,
 
     .platform = {
 
@@ -76,8 +76,8 @@ struct vm_config vm2 = {
         .region_num = 1,
         .regions = (struct vm_mem_region[]) {
             {
-                .base = 0x70000,
-                .size = 0x0ffff,
+                .base = 0x74000,
+                .size = 0x0c000,
             },
         },
 

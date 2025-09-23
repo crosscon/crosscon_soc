@@ -5,6 +5,7 @@ set -x
 # Clone Bao.
 git clone https://github.com/crosscon/CROSSCON-Hypervisor.git -b feat/crosscon-soc
 cd CROSSCON-Hypervisor
+git checkout 8f2e2a4ef6992ebb7a825e2e000b93b94b506cea
 patch -p1  < ../../../src/patches/cs_hypervisor.patch
 cp ../../../src/crosscon_soc.c src/arch/riscv/
 cp ../../../src/crosscon_soc.h src/arch/riscv/inc/

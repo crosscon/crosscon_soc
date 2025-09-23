@@ -74,7 +74,7 @@ bool interrupt_raised = false;
 void bpg_irq_handler() {
 
     uint32_t *pg_csrs = (uint32_t*) SRAM_PG_CSR_ADR;
-    pg_csrs[PG_INTERRUPT_SRC_REG_ADDR] = 1;
+    pg_csrs[PG_INTR_SRC_REG_ADDR] = 1;
 
     interrupt_raised = true;
 }
@@ -188,12 +188,12 @@ int main(void) {
     printf("Interrupt was raised.\n");
 
     uint32_t *pg_csrs = (uint32_t*) SRAM_PG_CSR_ADR;
-    if (pg_csrs[PG_INTERRUPT_SRC_REG_ADDR] != 0) {
+    if (pg_csrs[PG_INTR_SRC_REG_ADDR] != 0) {
         printf("Error: Source bit was not cleared.\n");
         return -1;
     }
 
-    if (pg_csrs[PG_INTERRUPT_CAUSE_REG_ADDR] != 1) {
+    if (pg_csrs[PG_INTR_CAUSE_DOMAIN_REG_ADDR] != 1) {
         printf("Error: Unexpected cause of the interrupt.\n");
         return -1;
     }
