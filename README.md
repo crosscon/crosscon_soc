@@ -199,8 +199,6 @@ You should see something similar to
 [09:41:50.699] Connected to /dev/ttyUSB1
 ```
 
-Open another terminal.
-
 ## Upload and run the program using GDB
 
 Run
