@@ -212,6 +212,16 @@ void main(void){
     }
 
     printf("[guest 0] Done.\n");
+
+    while(1) {
+        asm volatile ("nop");
+    }
+
+    //int cnt = 0;
+    //while(1) {
+    //    printf("[guest 0] cnt = %d\n", cnt);
+    //    cnt += 1;
+    //}
     
-    while(1) wfi();
+    //while(1) wfi();
 }

@@ -27,8 +27,8 @@ struct vm_config vm1 = {
         .devs = (struct vm_dev_region[]) {
             {
                 // UART
-                .pa = UART_BASE_ADR,
-                .va = UART_BASE_ADR,
+                .pa = UART_0_BASE_ADR,
+                .va = UART_0_BASE_ADR,
                 .size = 0xfffff,
                 .interrupt_num = 0,
             },
@@ -85,8 +85,8 @@ struct vm_config vm2 = {
         .devs = (struct vm_dev_region[]) {
             {
                 // UART
-                .pa = UART_BASE_ADR,
-                .va = UART_BASE_ADR,
+                .pa = UART_0_BASE_ADR,
+                .va = UART_0_BASE_ADR,
                 .size = 0xfffff,
                 .interrupt_num = 0,
             },

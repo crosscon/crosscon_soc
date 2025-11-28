@@ -2,11 +2,13 @@ source ~/.screenrc
 
 zombie kr
 
-screen -t bits bash -c "cd upload_bits; ./upload.sh ../../bits/crosscon_soc_a7_v0.5.1.bit"
+screen -t bits bash -c "cd upload_bits; ./upload.sh ../../bits/crosscon_soc_a7_v1.0.bit"
 
 screen -t htop bash -c "echo 'Waiting for bitstream to be uploaded ...'; sleep 8; cd openocd; openocd -f crosscon_soc.openocd.cfg"
 
-screen -t ping bash -c "echo 'Wating for bitstream to be uploaded and OpenOCD to start ...'; sleep 9; cd /home/zigap/dev/crosscon_soc/examples/tests/cs_hypervisor_uart_test; ./run_gdb.sh"
+screen -t ping bash -c "echo 'Wating for bitstream to be uploaded and OpenOCD to start ...'; sleep 9; cd ../examples/cs_hypervisor_with_aes_gcm_example; ./run_gdb.sh"
+#screen -t ping bash -c "echo 'Wating for bitstream to be uploaded and OpenOCD to start ...'; sleep 9; cd ../examples/cs_hypervisor_with_aes_gcm_example_new_new; ./run_gdb.sh"
+#screen -t ping bash -c "echo 'Wating for bitstream to be uploaded and OpenOCD to start ...'; sleep 9; cd ../examples/cs_hypervisor_full_isolation; ./run_gdb.sh"
 
 # Set default window.
 #select 1

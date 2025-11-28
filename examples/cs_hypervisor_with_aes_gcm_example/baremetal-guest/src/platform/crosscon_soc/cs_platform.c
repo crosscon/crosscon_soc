@@ -1,14 +1,17 @@
+#include <crosscon_soc.h>
+
 #include <plat.h>
 #include <8250_uart.h>
 
+#include <stdint.h>
+#include <stdbool.h>
 
 #define VIRT_UART16550_INTERRUPT	10
 
 #define VIRT_UART16550_ADDR		UART_ADDR
 
 #define VIRT_UART_BAUDRATE		115200
-#define VIRT_UART_SHIFTREG_ADDR		1843200
-
+#define VIRT_UART_SHIFTREG_ADDR		25000000
 
 void uart_init(){
     uart8250_init(VIRT_UART16550_ADDR, VIRT_UART_SHIFTREG_ADDR,

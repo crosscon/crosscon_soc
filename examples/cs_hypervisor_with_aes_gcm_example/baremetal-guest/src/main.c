@@ -45,7 +45,7 @@ void aes_gcm_cipher(
     uint8_t data_in_block_buf[16];
     uint8_t data_out_block_buf[16 + 16 + 1]; // Space for output block and tag.
 
-    uint32_t *aes_mm_status_reg = (uint32_t*) AES_MM_CFG_BASE_ADR;
+    uint32_t *aes_mm_status_reg = (uint32_t*) AES_GCM_CFG_BASE_ADR;
 
     //
     // Pass initial parameters.
@@ -152,7 +152,6 @@ void aes_gcm_cipher(
 void main(void){
 
     printf("[guest 0] Bare-metal test guest\n");
-
     
     uint8_t ds1_key[] = {0x92, 0xbe, 0x46, 0x6d, 0x53, 0xe3, 0x5c, 0x8a, 0x95, 0x2d, 0x4b, 0x68, 0x3a, 0x3b, 0x10, 0x7d, 0xd9, 0x7e, 0x56, 0x4d, 0x4e, 0x63, 0xa7, 0x82, 0x10, 0x70, 0x4a, 0x29, 0x77, 0x3f, 0x75, 0x6d};
     uint8_t ds1_iv[] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
@@ -210,7 +209,8 @@ void main(void){
     }
 
     printf("[guest 0] Done.\n");
-   
-    
-    while(1) wfi();
+
+    while(1) {
+        asm volatile ("nop");
+    }
 }
