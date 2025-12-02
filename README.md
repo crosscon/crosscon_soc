@@ -7,7 +7,7 @@ Here you can find the _CROSSCON SoC_: a system-on-chip (SoC) developed as part o
 **CROSSCON SoC** is a SoC design, developed as part of the [CROSSCON project](https://crosscon.eu/), that provides a secure RISC-V execution environment for mixed-criticality IoT devices that require strong software (SW) and hardware (HW) isolation, flexibility, small code size and low power consumption. The CROSSCON SoC supports strong software isolation through virtualization-based trusted execution environments (TEEs) where HW modules connected to the interconnect can be shared between TEEs without compromising isolation.
 
 <p align="center">
-    <img src="./imgs/crosscon_soc_1.1_architecture.png" width=70% height=70%>
+    <img src="./imgs/crosscon_soc_1.1_architecture.drawio.png" width=70% height=70%>
 </p>
 <p align="center">Figure 1: The architecture of the CROSSCON SoC</p>
 
