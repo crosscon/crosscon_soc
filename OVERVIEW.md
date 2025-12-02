@@ -1,4 +1,4 @@
-# Isolation of software through the entire hardware-software stack on low-end MCUs
+# Isolation of software through hardware-software stack on low-end MCUs
 
 There is a common trend in the industry where companies merge functionality, traditionally supported by multiple chips, into a single System-on-Chip (SoC). This is useful as it reduces costs, simplifies development and makes the system more flexible. But at the same time, it increases the attack surface, as more of the system resources are shared.
 
