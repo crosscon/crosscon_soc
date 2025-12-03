@@ -3,7 +3,9 @@
 #include <crosscon_soc.h>
 
 void uart_init(){
-    UART_Init(CPU_CLK, 115200);
+    UART_Init(CPU_CLK, 9600);
+    //UART_Init(CPU_CLK, 19200);
+    //UART_Init(CPU_CLK, 115200);
 }
 
 void uart_putc(char c)
